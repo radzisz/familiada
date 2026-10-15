@@ -20,6 +20,8 @@ export interface GameState {
   rev: number;
   /** „thanks” – ekran końcowy z logami organizatorów po finale. */
   view: "game" | "final" | "thanks";
+  /** false = ekran startowy na tablicy; „Start” na pilocie zaczyna grę od rundy 1. */
+  started: boolean;
   round: number;
   /** Czy pytanie bieżącej rundy jest już pokazane na tablicy (pierwsze „Dalej” w rundzie je odsłania). */
   questionShown: boolean;
@@ -60,6 +62,7 @@ export type GameAction =
   | { type: "next"; answers: BoardAnswer[]; now: number }
   | { type: "setRound"; round: number }
   | { type: "setView"; view: GameState["view"] }
+  | { type: "start" }
   | { type: "reset" }
   | { type: "finalPick"; person: Person; question: number; answer: number }
   | { type: "finalClear" }
@@ -72,6 +75,7 @@ export function initialGameState(): GameState {
   return {
     rev: 0,
     view: "game",
+    started: false,
     round: 1,
     questionShown: false,
     questionEndsAt: null,
@@ -248,6 +252,7 @@ function applyAction(state: GameState, action: GameAction): GameState {
     case "next": return next(state, action.answers, action.now);
     case "setRound": return freshRound(state, Math.min(ROUND_COUNT, Math.max(1, action.round)));
     case "setView": return { ...state, view: action.view };
+    case "start": return state.started ? state : { ...state, started: true };
     case "reset": return { ...initialGameState(), view: state.view, final: state.final };
     case "finalPick": return finalPick(state, action.person, action.question, action.answer);
     case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0, finalQuestion: NONE };
@@ -309,6 +314,8 @@ export function parseGameState(raw: unknown): GameState {
   return {
     rev: Number.isInteger(r.rev) ? r.rev! : 0,
     view: r.view === "final" || r.view === "thanks" ? r.view : "game",
+    // Zapis sprzed tej flagi to gra w toku – ekranu startowego już nie pokazujemy.
+    started: typeof r.started === "boolean" ? r.started : true,
     round: Number.isInteger(r.round) && r.round! >= 1 && r.round! <= ROUND_COUNT ? r.round! : 1,
     // Zapis sprzed tej flagi to gra w toku – pytanie było już na tablicy.
     questionShown: typeof r.questionShown === "boolean" ? r.questionShown : true,

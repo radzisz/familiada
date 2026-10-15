@@ -8,6 +8,9 @@ describe("introFor – plansza z rzepkami tylko przy przejściu do przodu", () =
   it("shows the round intro when the game moves on to the next round", () => {
     expect(introFor(at({ round: 2 }), at({ round: 3 }))).toEqual({ kind: "round", round: 3 });
   });
+  it("shows the round 1 intro when the game starts from the start screen", () => {
+    expect(introFor(at({ started: false }), at({ started: true }))).toEqual({ kind: "round", round: 1 });
+  });
   it("shows the final intro when the game moves from rounds to the final", () => {
     expect(introFor(at({ round: 5 }), at({ round: 5, view: "final" }))).toEqual({ kind: "final" });
   });

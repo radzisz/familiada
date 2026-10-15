@@ -5,6 +5,7 @@ import type { GameAction, GameState } from "@/lib/game";
 import type { Board } from "@/lib/types";
 import { FinalView } from "./FinalView";
 import { GameView } from "./GameView";
+import { StartView } from "./StartView";
 import { ThanksView } from "./ThanksView";
 import { createSound } from "./sound";
 import { RoundIntro } from "./RoundIntro";
@@ -26,7 +27,7 @@ function useBoardKeys(
       const key = e.key.toLowerCase();
       if (key === "h") return togglePanel();
       if (e.key === "Backspace") return dispatch({ type: "undo" });
-      if (!state || state.view !== "game") return;
+      if (!state || !state.started || state.view !== "game") return;
       const slotCount = board?.rounds[state.round - 1]?.answers.length ?? 0;
       if (/^[1-6]$/.test(key)) dispatch({ type: "reveal", index: Number(key) - 1, slotCount });
       if (key === "x") dispatch({ type: "strike" });
@@ -63,7 +64,8 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
   return (
     <main className={`tb${pilot ? " pilot" : ""}`}>
       <header className="tb-head">
-        <h1>FAMILIADA MAŁŻEŃSKA</h1>
+        {/* Na ekranie startowym tytuł jest duży na środku – w nagłówku byłby powtórzeniem. */}
+        <h1 className={state.started ? undefined : "tb-sr"}>FAMILIADA MAŁŻEŃSKA</h1>
         <nav aria-label="Widoki" hidden={hideHost}>
           {!pilot && <button type="button" onClick={toggleFullscreen}>Pełny ekran</button>}
         </nav>
@@ -72,6 +74,8 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
       {state.view === "game" && <GameView state={state} board={board} fx={fx} sound={sound} hideHost={hideHost} pilot={pilot} dispatch={dispatch} onNext={goNext} onTogglePanel={() => setPanelHidden((h) => !h)} />}
       {state.view === "final" && <FinalView state={state} board={board} hideHost={hideHost} pilot={pilot} dispatch={dispatch} sound={sound} onTogglePanel={() => setPanelHidden((h) => !h)} />}
       {state.view === "thanks" && <ThanksView state={state} hideHost={hideHost} dispatch={dispatch} />}
+      {/* Przed startem tablica stoi pod półprzezroczystą nakładką z tytułem i przyciskiem „Start”. */}
+      {!state.started && <StartView hideHost={hideHost} dispatch={dispatch} />}
       {!pilot && fx.intro && <RoundIntro key={fx.intro.key} count={fx.intro.count} label={fx.intro.label} onPop={sound.beep} />}
       {hideHost && (
         <button type="button" className="tb-showpanel" onClick={() => setPanelHidden(false)} title="Pokaż panel prowadzącego (H)">

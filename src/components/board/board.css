@@ -313,3 +313,10 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb button.tb-team.w:hover:not(:disabled) { border-color: var(--wife); }
 .tb button.tb-team.h:hover:not(:disabled) { border-color: var(--husband); }
 .tb.pilot button.tb-team { padding: 2px 10px; border-radius: 10px; min-height: 48px; }
+
+/* Ekran startowy: duży tytuł, loga organizatorów i (dla prowadzącego) przycisk „Start”. */
+.tb-start { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(20px, 5vh, 56px); padding: 16px; text-align: center; background: rgba(5, 7, 13, .86); backdrop-filter: blur(3px); }
+.tb-start-title { margin: 0; font-family: var(--led-font); color: var(--led); font-weight: 400; line-height: 1.05; font-size: clamp(48px, 10vw, 150px); letter-spacing: 4px; text-shadow: 0 0 28px color-mix(in srgb, var(--led) 60%, transparent); }
+.tb-start-logos .tb-thanks-disc { width: clamp(100px, 15vw, 190px); }
+.tb .tb-start-btn { font-size: clamp(22px, 3vw, 32px); padding: 14px 40px; }
+.tb.pilot .tb-start-title { font-size: 40px; }

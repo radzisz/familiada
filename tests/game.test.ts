@@ -183,6 +183,21 @@ describe("parseGameState", () => {
   });
 });
 
+describe("gameReducer – start screen", () => {
+  it("a new game waits on the start screen; start begins round 1 and can be undone", () => {
+    const s0 = initialGameState();
+    expect(s0.started).toBe(false);
+    const s1 = gameReducer(s0, { type: "start" });
+    expect(s1).toMatchObject({ started: true, round: 1, view: "game" });
+    expect(gameReducer(s1, { type: "start" })).toBe(s1);
+    expect(gameReducer(s1, { type: "undo" }).started).toBe(false);
+  });
+  it("parseGameState treats a saved game without the flag as already started", () => {
+    expect(parseGameState({ round: 2 }).started).toBe(true);
+    expect(parseGameState({ started: false }).started).toBe(false);
+  });
+});
+
 describe("gameReducer – question reveal (Dalej pokazuje pytanie)", () => {
   it("a new game starts with the question hidden", () => {
     expect(initialGameState().questionShown).toBe(false);

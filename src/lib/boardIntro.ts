@@ -9,6 +9,8 @@ export type IntroKind = { kind: "round"; round: number } | { kind: "final" };
  */
 export function introFor(before: GameState, state: GameState): IntroKind | null {
   assert(Number.isInteger(state.round) && state.round >= 1, "introFor: bad round");
+  // Start gry z ekranu startowego – plansza pierwszej rundy.
+  if (!before.started && state.started) return { kind: "round", round: state.round };
   if (before.view !== "game") return null;
   if (state.view === "final") return { kind: "final" };
   if (state.view === "game" && state.round > before.round) return { kind: "round", round: state.round };
