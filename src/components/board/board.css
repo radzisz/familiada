@@ -293,3 +293,17 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-panel.fit { width: fit-content; max-width: 100%; }
 .tb-key-warn { margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--led) 18%, transparent); color: var(--led); font-weight: 600; font-size: 14px; }
 .tb .tb-key button:disabled { opacity: .35; cursor: not-allowed; }
+/* Finał: bieżące pytanie na tablicy (znika po upływie czasu) i podświetlony kafelek na pilocie */
+.tb-fquestion { margin: 12px 0 0; padding: 10px 16px; border: 2px solid #1d2440; border-radius: 14px; background: var(--board); font-family: var(--led-font); color: var(--led); font-size: clamp(26px, 3.6vw, 52px); line-height: 1.1; text-align: center; text-wrap: balance; }
+.tb-fquestion span { opacity: .7; }
+.tb.pilot .tb-fquestion { font-size: 20px; }
+.tb-fbox.current { border-color: var(--led); box-shadow: 0 0 0 1px var(--led) inset, 0 0 16px color-mix(in srgb, var(--led) 35%, transparent); }
+
+/* Ekran końcowy: „Dziękujemy!” i loga organizatorów na białych tarczach (loga są ciemne, tło tablicy też). */
+.tb-thanks { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(20px, 5vh, 56px); text-align: center; }
+.tb-thanks-title { margin: 0; font-family: var(--led-font); color: var(--led); font-weight: 400; font-size: clamp(56px, 11vw, 160px); letter-spacing: 4px; text-shadow: 0 0 28px color-mix(in srgb, var(--led) 60%, transparent); animation: tb-count 1.2s ease-out; }
+.tb-thanks-logos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(24px, 6vw, 96px); }
+.tb-thanks-logos li { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.tb-thanks-disc { display: flex; width: clamp(140px, 22vw, 280px); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 6%; box-shadow: 0 0 32px color-mix(in srgb, var(--led) 35%, transparent); }
+.tb-thanks-disc img { width: 100%; height: 100%; object-fit: contain; }
+.tb-thanks-name { font-size: clamp(16px, 2vw, 26px); font-weight: 700; color: var(--text); }

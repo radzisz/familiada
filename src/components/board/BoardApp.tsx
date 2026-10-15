@@ -5,6 +5,7 @@ import type { GameAction, GameState } from "@/lib/game";
 import type { Board } from "@/lib/types";
 import { FinalView } from "./FinalView";
 import { GameView } from "./GameView";
+import { ThanksView } from "./ThanksView";
 import { createSound } from "./sound";
 import { RoundIntro } from "./RoundIntro";
 import { useBoardEffects } from "./useBoardEffects";
@@ -68,9 +69,9 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
         </nav>
       </header>
       {error && !hideHost && <p className="tb-error" role="alert">{error}</p>}
-      {state.view === "game"
-        ? <GameView state={state} board={board} fx={fx} sound={sound} hideHost={hideHost} pilot={pilot} dispatch={dispatch} onNext={goNext} onTogglePanel={() => setPanelHidden((h) => !h)} />
-        : <FinalView state={state} board={board} hideHost={hideHost} pilot={pilot} dispatch={dispatch} sound={sound} onTogglePanel={() => setPanelHidden((h) => !h)} />}
+      {state.view === "game" && <GameView state={state} board={board} fx={fx} sound={sound} hideHost={hideHost} pilot={pilot} dispatch={dispatch} onNext={goNext} onTogglePanel={() => setPanelHidden((h) => !h)} />}
+      {state.view === "final" && <FinalView state={state} board={board} hideHost={hideHost} pilot={pilot} dispatch={dispatch} sound={sound} onTogglePanel={() => setPanelHidden((h) => !h)} />}
+      {state.view === "thanks" && <ThanksView state={state} hideHost={hideHost} dispatch={dispatch} />}
       {!pilot && fx.intro && <RoundIntro key={fx.intro.key} count={fx.intro.count} label={fx.intro.label} onPop={sound.beep} />}
       {hideHost && (
         <button type="button" className="tb-showpanel" onClick={() => setPanelHidden(false)} title="Pokaż panel prowadzącego (H)">

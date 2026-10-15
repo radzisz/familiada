@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PARTNERS } from "@/lib/partners";
 import "./survey.css";
 
 export function SurveyShell({ children }: { children: React.ReactNode }) {
@@ -12,11 +13,6 @@ export function SurveyShell({ children }: { children: React.ReactNode }) {
     </main>
   );
 }
-
-const PARTNERS = [
-  { href: "https://youngtree.org/", src: "/logos/youngtree.png", name: "Fundacja YoungTree" },
-  { href: "https://wspolnotamalzenstw.pl/", src: "/logos/wspolnota-malzenstw.png", name: "Wspólnota Małżeństw" },
-] as const;
 
 function SurveyFooter() {
   return (

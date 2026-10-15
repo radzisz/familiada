@@ -18,7 +18,8 @@ export type Person = "p1" | "p2";
 export interface GameState {
   /** Rośnie przy każdej zmianie; wyższy numer wygrywa przy synchronizacji urządzeń. */
   rev: number;
-  view: "game" | "final";
+  /** „thanks” – ekran końcowy z logami organizatorów po finale. */
+  view: "game" | "final" | "thanks";
   round: number;
   /** Czy pytanie bieżącej rundy jest już pokazane na tablicy (pierwsze „Dalej” w rundzie je odsłania). */
   questionShown: boolean;
@@ -38,8 +39,10 @@ export interface GameState {
   awarded: number[];
   final: { p1: number[]; p2: number[] };
   timerEndsAt: number | null;
-  /** Krok finału sterowany „Dalej” (0–FINAL_DONE): stoper osoby 1, osoba 2, stoper osoby 2, koniec. */
+  /** Krok finału sterowany „Dalej” (0–FINAL_DONE): osoba 1 gotowa / odpowiada, osoba 2 gotowa / odpowiada, koniec. */
   finalStep: number;
+  /** Pytanie finału pokazane teraz na tablicy (NONE = żadne). */
+  finalQuestion: number;
   /** Poprzednie stany (najstarszy pierwszy) – „Wstecz” cofa ostatnią akcję. */
   history: GameSnapshot[];
 }
@@ -82,6 +85,7 @@ export function initialGameState(): GameState {
     final: { p1: Array(FINAL_COUNT).fill(NONE), p2: Array(FINAL_COUNT).fill(NONE) },
     timerEndsAt: null,
     finalStep: 0,
+    finalQuestion: NONE,
     history: [],
   };
 }
@@ -166,7 +170,7 @@ function award(state: GameState, team: Team, answers: BoardAnswer[]): GameState 
 
 /** Czas na odpowiedzi w finale (sekundy): osoba 1 i osoba 2. */
 export const FINAL_SECONDS: Record<Person, number> = { p1: 20, p2: 25 };
-/** Kroki finału: 0 osoba 1 gotowa, 1 stoper osoby 1, 2 osoba 2 gotowa, 3 stoper osoby 2, 4 koniec. */
+/** Kroki finału: 0 osoba 1 gotowa, 1 osoba 1 odpowiada (stoper), 2 osoba 2 gotowa, 3 osoba 2 odpowiada, 4 koniec. */
 export const FINAL_DONE = 4;
 
 /** Kto teraz odpowiada w finale (wynika z kroku). */
@@ -174,19 +178,41 @@ export function finalPerson(state: GameState): Person {
   return state.finalStep < 2 ? "p1" : "p2";
 }
 
-/** Dopisek pod „Dalej” w finale: co zrobi następne kliknięcie (null = finał skończony). */
-export function finalNextHint(state: GameState): string | null {
-  const hints = [`start ${FINAL_SECONDS.p1} s · osoba 1`, "osoba 2", `start ${FINAL_SECONDS.p2} s · osoba 2`, "koniec finału"];
-  return hints[state.finalStep] ?? null;
+const answering = (state: GameState) => state.finalStep === 1 || state.finalStep === 3;
+const timeIsUp = (state: GameState, now: number) => state.timerEndsAt === null || now >= state.timerEndsAt;
+
+/** Które pytanie finału widać teraz na tablicy (null = żadne: przed startem albo po upływie czasu). */
+export function finalQuestionOnBoard(state: GameState, now: number): number | null {
+  if (!answering(state) || state.finalQuestion < 0 || timeIsUp(state, now)) return null;
+  return state.finalQuestion;
 }
 
-/** „Dalej” w finale: stoper osoby 1 → osoba 2 → stoper osoby 2 → koniec (przejście zatrzymuje stoper). */
+/** Dopisek pod „Dalej” w finale: co zrobi następne kliknięcie (null = finał skończony). */
+export function finalNextHint(state: GameState, now: number): string | null {
+  if (state.view === "thanks") return null;
+  if (state.finalStep >= FINAL_DONE) return "podziękowanie";
+  if (state.finalStep === 0) return `start ${FINAL_SECONDS.p1} s · pytanie 1`;
+  if (state.finalStep === 2) return `start ${FINAL_SECONDS.p2} s · pytanie 1`;
+  if (!answering(state)) return null;
+  const last = state.finalQuestion >= FINAL_COUNT - 1 || timeIsUp(state, now);
+  if (last) return state.finalStep === 1 ? "osoba 2" : "koniec finału";
+  return `pytanie ${state.finalQuestion + 2}`;
+}
+
+/**
+ * „Dalej” w finale: start stopera z pierwszym pytaniem na tablicy, potem kolejne pytania;
+ * po ostatnim pytaniu albo po upływie czasu – następna osoba (pytania znikają) i na końcu koniec finału.
+ */
 function finalNext(state: GameState, now: number): GameState {
-  if (state.finalStep >= FINAL_DONE) return state;
-  const step = state.finalStep + 1;
-  const timing = step === 1 || step === 3;
-  const seconds = step === 1 ? FINAL_SECONDS.p1 : FINAL_SECONDS.p2;
-  return { ...state, finalStep: step, timerEndsAt: timing ? now + seconds * 1000 : null };
+  if (state.view === "thanks") return state;
+  // Po zakończonym finale „Dalej” pokazuje ekran końcowy z podziękowaniem.
+  if (state.finalStep >= FINAL_DONE) return { ...state, view: "thanks" };
+  if (state.finalStep === 0 || state.finalStep === 2) {
+    const seconds = state.finalStep === 0 ? FINAL_SECONDS.p1 : FINAL_SECONDS.p2;
+    return { ...state, finalStep: state.finalStep + 1, finalQuestion: 0, timerEndsAt: now + seconds * 1000 };
+  }
+  if (state.finalQuestion < FINAL_COUNT - 1 && !timeIsUp(state, now)) return { ...state, finalQuestion: state.finalQuestion + 1 };
+  return { ...state, finalStep: state.finalStep + 1, finalQuestion: NONE, timerEndsAt: null };
 }
 
 /** Błąd (X) dla drużyny, która teraz odpowiada (najwyżej MAX_STRIKES); bez wybranej drużyny nic się nie dzieje. */
@@ -224,7 +250,7 @@ function applyAction(state: GameState, action: GameAction): GameState {
     case "setView": return { ...state, view: action.view };
     case "reset": return { ...initialGameState(), view: state.view, final: state.final };
     case "finalPick": return finalPick(state, action.person, action.question, action.answer);
-    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0 };
+    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0, finalQuestion: NONE };
     case "finalNext": return finalNext(state, action.now);
     case "timerStart": return { ...state, timerEndsAt: action.now + action.seconds * 1000 };
     case "timerStop": return { ...state, timerEndsAt: null };
@@ -282,7 +308,7 @@ export function parseGameState(raw: unknown): GameState {
     Array.isArray(v) && v.length === len && v.every((x) => Number.isInteger(x)) ? (v as number[]) : null;
   return {
     rev: Number.isInteger(r.rev) ? r.rev! : 0,
-    view: r.view === "final" ? "final" : "game",
+    view: r.view === "final" || r.view === "thanks" ? r.view : "game",
     round: Number.isInteger(r.round) && r.round! >= 1 && r.round! <= ROUND_COUNT ? r.round! : 1,
     // Zapis sprzed tej flagi to gra w toku – pytanie było już na tablicy.
     questionShown: typeof r.questionShown === "boolean" ? r.questionShown : true,
@@ -300,6 +326,7 @@ export function parseGameState(raw: unknown): GameState {
     },
     timerEndsAt: Number.isFinite(r.timerEndsAt) ? r.timerEndsAt! : null,
     finalStep: Number.isInteger(r.finalStep) && r.finalStep! >= 0 && r.finalStep! <= FINAL_DONE ? r.finalStep! : 0,
+    finalQuestion: Number.isInteger(r.finalQuestion) && r.finalQuestion! >= 0 && r.finalQuestion! < FINAL_COUNT ? r.finalQuestion! : NONE,
     history: parseHistory(r.history),
   };
 }

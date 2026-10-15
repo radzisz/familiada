@@ -10,21 +10,24 @@ interface Props {
   questions: (BoardQuestion | null)[];
   /** Czyje odpowiedzi teraz zaznaczamy (wynika z kroku finału – „Dalej” przełącza na osobę 2). */
   person: Person;
+  /** Pytanie pokazane teraz na tablicy (podświetlone kafelek), null = żadne. */
+  current: number | null;
   dispatch: (a: GameAction) => void;
 }
 
 /** Finał na pilocie: pytania jako kafelki z odpowiedziami do kliknięcia i „Błędna” – dla wybranej osoby. */
-export function FinalPicker({ state, questions, person, dispatch }: Props) {
+export function FinalPicker({ state, questions, person, current, dispatch }: Props) {
   return (
     <div className="tb-fpick">
       <p className="tb-fpick-who">Odpowiada: <b>{PERSON_NAME[person]}</b></p>
-      {questions.map((q, k) => <PickBox key={k} index={k} question={q} person={person} state={state} dispatch={dispatch} />)}
+      {questions.map((q, k) => <PickBox key={k} index={k} question={q} person={person} current={current === k} state={state} dispatch={dispatch} />)}
     </div>
   );
 }
 
 interface BoxProps {
   index: number;
+  current: boolean;
   question: BoardQuestion | null;
   person: Person;
   state: GameState;
@@ -32,14 +35,14 @@ interface BoxProps {
 }
 
 /** Jedno pytanie finału: odpowiedzi z punktami + „Błędna”; ponowne kliknięcie wybranej odznacza ją. */
-function PickBox({ index, question, person, state, dispatch }: BoxProps) {
+function PickBox({ index, question, person, current, state, dispatch }: BoxProps) {
   if (!question) return <div className="tb-fbox"><p className="tb-fbox-q">{index + 1}. (nie wybrano pytania)</p></div>;
   const picked = state.final[person][index] ?? NONE;
   const blocked = person === "p2" ? (state.final.p1[index] ?? NONE) : NONE;
   const pick = (answer: number) =>
     dispatch({ type: "finalPick", person, question: index, answer: picked === answer ? NONE : answer });
   return (
-    <div className={`tb-fbox${picked === NONE ? "" : " done"}`}>
+    <div className={`tb-fbox${picked === NONE ? "" : " done"}${current ? " current" : ""}`}>
       <p className="tb-fbox-q"><b>{index + 1}.</b> {question.text}</p>
       <div className="tb-fbox-answers">
         {question.answers.map((a, i) => (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finalTotal, gameReducer, initialGameState, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState, WRONG, FINAL_SECONDS, finalNextHint, finalPerson } from "@/lib/game";
+import { finalTotal, gameReducer, initialGameState, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState, WRONG, FINAL_SECONDS, finalNextHint, finalPerson, finalQuestionOnBoard } from "@/lib/game";
 
 const answers = [{ label: "A", points: 40 }, { label: "B", points: 30 }, { label: "C", points: 20 }];
 /** Stan startowy z drużyną Żon przy odpowiadaniu (błędy trafiają do niej). */
@@ -98,20 +98,47 @@ describe("gameReducer – final", () => {
     const final = { p1: [WRONG, 0, NONE, NONE, NONE], p2: [NONE, NONE, NONE, NONE, NONE] };
     expect(parseGameState({ final }).final.p1[0]).toBe(WRONG);
   });
-  it("finalNext: timer for person 1, then person 2, then timer for person 2, then done", () => {
-    const s0 = initialGameState();
-    expect(finalPerson(s0)).toBe("p1");
-    const s1 = gameReducer(s0, { type: "finalNext", now: 1000 });
-    expect(s1).toMatchObject({ finalStep: 1, timerEndsAt: 1000 + FINAL_SECONDS.p1 * 1000 });
-    const s2 = gameReducer(s1, { type: "finalNext", now: 5000 });
-    expect(s2).toMatchObject({ finalStep: 2, timerEndsAt: null });
-    expect(finalPerson(s2)).toBe("p2");
-    const s3 = gameReducer(s2, { type: "finalNext", now: 9000 });
-    expect(s3).toMatchObject({ finalStep: 3, timerEndsAt: 9000 + FINAL_SECONDS.p2 * 1000 });
-    const s4 = gameReducer(s3, { type: "finalNext", now: 20000 });
-    expect(s4).toMatchObject({ finalStep: 4, timerEndsAt: null });
-    expect(finalNextHint(s4)).toBeNull();
-    expect(gameReducer(s4, { type: "finalNext", now: 30000 })).toBe(s4);
+  /** Klika „Dalej” w finale `n` razy, co sekundę od chwili `from`. */
+  const nexts = (state: GameState, n: number, from: number) =>
+    Array.from({ length: n }, (_, i) => i).reduce((st, i) => gameReducer(st, { type: "finalNext", now: from + i * 1000 }), state);
+  it("finalNext: person 1 – timer and question 1, then the next questions one by one", () => {
+    const s1 = gameReducer(initialGameState(), { type: "finalNext", now: 1000 });
+    expect(s1).toMatchObject({ finalStep: 1, finalQuestion: 0, timerEndsAt: 1000 + FINAL_SECONDS.p1 * 1000 });
+    expect(finalQuestionOnBoard(s1, 2000)).toBe(0);
+    const s5 = nexts(s1, 4, 2000);
+    expect(s5).toMatchObject({ finalStep: 1, finalQuestion: 4, timerEndsAt: s1.timerEndsAt });
+    expect(finalNextHint(s5, 6000)).toBe("osoba 2");
+  });
+  it("questions disappear from the board when the time is up", () => {
+    const s1 = gameReducer(initialGameState(), { type: "finalNext", now: 1000 });
+    expect(finalQuestionOnBoard(s1, 1000 + FINAL_SECONDS.p1 * 1000)).toBeNull();
+  });
+  it("after the last question (or when time is up) Dalej goes to person 2 and hides the questions", () => {
+    const afterLast = nexts(initialGameState(), 6, 1000);
+    expect(afterLast).toMatchObject({ finalStep: 2, finalQuestion: NONE, timerEndsAt: null });
+    expect(finalPerson(afterLast)).toBe("p2");
+    const s1 = gameReducer(initialGameState(), { type: "finalNext", now: 1000 });
+    const late = gameReducer(s1, { type: "finalNext", now: 1000 + FINAL_SECONDS.p1 * 1000 + 1 });
+    expect(late).toMatchObject({ finalStep: 2, finalQuestion: NONE });
+  });
+  it("person 2 runs the same way with the longer timer, then the final ends", () => {
+    const s2 = { ...initialGameState(), finalStep: 2 };
+    const s3 = gameReducer(s2, { type: "finalNext", now: 1000 });
+    expect(s3).toMatchObject({ finalStep: 3, finalQuestion: 0, timerEndsAt: 1000 + FINAL_SECONDS.p2 * 1000 });
+    const done = nexts(s3, 5, 2000);
+    expect(done).toMatchObject({ finalStep: 4, finalQuestion: NONE, timerEndsAt: null });
+    expect(finalNextHint(done, 9000)).toBe("podziękowanie");
+  });
+  it("after the final Dalej shows the thank-you screen, then does nothing", () => {
+    const done = { ...initialGameState(), view: "final" as const, finalStep: 4 };
+    const thanks = gameReducer(done, { type: "finalNext", now: 9000 });
+    expect(thanks.view).toBe("thanks");
+    expect(finalNextHint(thanks, 9000)).toBeNull();
+    expect(gameReducer(thanks, { type: "finalNext", now: 9500 })).toBe(thanks);
+    expect(gameReducer(thanks, { type: "undo" }).view).toBe("final");
+  });
+  it("parseGameState keeps the thank-you view", () => {
+    expect(parseGameState({ view: "thanks" }).view).toBe("thanks");
   });
   it("undo steps back through the final", () => {
     const s = run(initialGameState(), { type: "finalNext", now: 1000 }, { type: "finalNext", now: 2000 }, { type: "undo" });
@@ -125,6 +152,8 @@ describe("gameReducer – final", () => {
   it("parseGameState keeps a valid final step and drops a bad one", () => {
     expect(parseGameState({ finalStep: 2 }).finalStep).toBe(2);
     expect(parseGameState({ finalStep: 9 }).finalStep).toBe(0);
+    expect(parseGameState({ finalQuestion: 3 }).finalQuestion).toBe(3);
+    expect(parseGameState({ finalQuestion: 7 }).finalQuestion).toBe(NONE);
   });
   it("sums both columns", () => {
     const s = run(
