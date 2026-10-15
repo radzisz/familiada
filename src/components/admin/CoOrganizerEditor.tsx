@@ -90,7 +90,7 @@ function LogoTile(p: { logo: string | null; name: string; onPick: () => void; on
   }
   return (
     <div className="ad-co-logo">
-      <Image src={p.logo} alt={`Logo: ${p.name || "współorganizator"}`} width={120} height={120} unoptimized={p.logo.startsWith("data:")} />
+      <Image src={p.logo} alt={`Logo: ${p.name || "współorganizator"}`} width={120} height={120} unoptimized />
       <button type="button" className="ad-co-logo-remove" aria-label="Usuń logo" title="Usuń logo" onClick={p.onRemove}>
         <TrashIcon />
       </button>

@@ -3,8 +3,14 @@ import { z } from "zod";
 import { EventPatchSchema } from "@/lib/schemas";
 import { jsonError, parseBody } from "@/lib/server/http";
 import { adminDbRoute } from "@/lib/server/route";
-import { fetchEvent } from "@/lib/server/repo/events";
+import { isServedLogo, type CoOrganizer } from "@/lib/branding";
+import { fetchEvent, type EventRow } from "@/lib/server/repo/events";
 import { deleteEvent, updateEvent } from "@/lib/server/repo/eventAdmin";
+
+/** „Logo bez zmian”, a rozgrywka logo nie ma – nie byłoby czego pokazać. */
+function keepsMissingLogo(co: CoOrganizer | null | undefined, event: EventRow): boolean {
+  return !!co && isServedLogo(co.logo) && event.partner_logo_version === null;
+}
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -20,7 +26,9 @@ export async function PATCH(req: Request, ctx: Ctx): Promise<NextResponse> {
   const body = await parseBody(req, EventPatchSchema);
   if (body instanceof NextResponse) return body;
   return adminDbRoute("events patch", async (db) => {
-    if (!(await fetchEvent(db, id))) return jsonError("Nie ma takiej rozgrywki.", 404);
+    const event = await fetchEvent(db, id);
+    if (!event) return jsonError("Nie ma takiej rozgrywki.", 404);
+    if (keepsMissingLogo(body.coOrganizer, event)) return jsonError("Najpierw wgraj logo współorganizatora.", 400);
     await updateEvent(db, id, body);
     return NextResponse.json({ ok: true });
   });

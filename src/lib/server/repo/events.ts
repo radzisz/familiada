@@ -19,7 +19,8 @@ export interface EventRow {
   /** Współorganizator – pokazywany tylko z nazwą i logo. */
   partner_name: string | null;
   partner_url: string | null;
-  partner_logo: string | null;
+  /** Wersja logo współorganizatora (null = brak logo); samo logo czyta `fetchPartnerLogo`. */
+  partner_logo_version: number | null;
 }
 
 function sanitizePlan(raw: unknown): GamePlan {
@@ -31,16 +32,26 @@ function sanitizePlan(raw: unknown): GamePlan {
   return { rounds: pick(r.rounds, ROUND_COUNT), final: pick(r.final, FINAL_COUNT) };
 }
 
-const EVENT_COLUMNS = "id, name, survey_open, is_test, game_plan, board_title, event_name, partner_name, partner_url, partner_logo";
+const EVENT_COLUMNS = "id, name, survey_open, is_test, game_plan, board_title, event_name, partner_name, partner_url, partner_logo_version";
 
 function toEventRow(data: unknown): EventRow {
   const row = data as EventRow;
   return { ...row, game_plan: sanitizePlan(row.game_plan) };
 }
 
+/**
+ * Logo współorganizatora (data URL do 300 KB albo ścieżka /logos/…) – czyta je tylko `/api/logo/<id>`.
+ * W `EVENT_COLUMNS` go nie ma, bo `fetchEvent` idzie przy każdym zapytaniu o stan gry (pilot, tablica).
+ */
+export async function fetchPartnerLogo(db: SupabaseClient, eventId: string): Promise<string | null> {
+  const { data, error } = await db.from("events").select("partner_logo").eq("id", eventId).maybeSingle();
+  check("fetchPartnerLogo", error);
+  return (data as { partner_logo: string | null } | null)?.partner_logo ?? null;
+}
+
 /** Tytuł, nazwa wydarzenia i organizatorzy rozgrywki (do ankiety i tablicy). */
 export function brandingOf(event: EventRow): Branding {
-  const co = coOrganizerFrom(event.partner_name, event.partner_url, event.partner_logo);
+  const co = coOrganizerFrom(event.id, event);
   return { title: boardTitle(event.board_title), eventName: event.event_name, partners: partnersFor(co) };
 }
 

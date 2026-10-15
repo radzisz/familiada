@@ -24,7 +24,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         isTest: event.is_test,
         boardTitle: boardTitle(event.board_title),
         eventName: event.event_name ?? "",
-        coOrganizer: coOrganizerFrom(event.partner_name, event.partner_url, event.partner_logo),
+        coOrganizer: coOrganizerFrom(event.id, event),
       },
       counts,
       questions: withStats,

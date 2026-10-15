@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BOARD_TITLE_MAX } from "./boardTitle";
-import { EVENT_NAME_MAX, isLogoSource, PARTNER_NAME_MAX, PARTNER_URL_MAX } from "./branding";
+import { EVENT_NAME_MAX, isLogoSource, isServedLogo, PARTNER_NAME_MAX, PARTNER_URL_MAX } from "./branding";
 import { MAX_TEST_SUBMISSIONS } from "./testAnswers";
 import { FINAL_COUNT, MAX_ANSWER_LENGTH, ROUND_COUNT } from "./types";
 
@@ -60,7 +60,8 @@ export const NewEventSchema = z.object({
 const CoOrganizerSchema = z.object({
   name: z.string().trim().min(1).max(PARTNER_NAME_MAX),
   url: z.url({ protocol: /^https?$/ }).max(PARTNER_URL_MAX).nullable(),
-  logo: z.string().refine(isLogoSource, "Nieprawidłowe logo."),
+  // Nowe logo (data URL) albo adres obecnego (= bez zmian).
+  logo: z.string().refine((s) => isLogoSource(s) || isServedLogo(s), "Nieprawidłowe logo."),
 });
 
 export const EventPatchSchema = z

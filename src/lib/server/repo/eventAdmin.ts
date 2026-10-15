@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { assert } from "@/lib/assert";
 import defaultQuestions from "@/lib/data/questions.json";
 import { storedBoardTitle } from "@/lib/boardTitle";
-import { isLogoSource, storedText, type CoOrganizer } from "@/lib/branding";
+import { isLogoSource, isServedLogo, storedText, type CoOrganizer } from "@/lib/branding";
 import { emptyPlan, type Audience } from "@/lib/types";
 import { check } from "../db";
 import { updateGamePlan } from "./events";
@@ -86,9 +86,12 @@ export interface EventPatch {
   coOrganizer?: CoOrganizer | null;
 }
 
+/** Kolumny współorganizatora: null czyści wszystko; nowe logo (data URL) dostaje nową wersję, adres obecnego zostawia logo. */
 function coOrganizerColumns(co: CoOrganizer | null) {
-  assert(co === null || isLogoSource(co.logo), "coOrganizerColumns: logo source");
-  return { partner_name: co?.name ?? null, partner_url: co?.url ?? null, partner_logo: co?.logo ?? null };
+  if (!co) return { partner_name: null, partner_url: null, partner_logo: null, partner_logo_version: null };
+  assert(isLogoSource(co.logo) || isServedLogo(co.logo), "coOrganizerColumns: logo source");
+  const logo = isLogoSource(co.logo) ? { partner_logo: co.logo, partner_logo_version: Date.now() } : {};
+  return { partner_name: co.name, partner_url: co.url, ...logo };
 }
 
 export async function updateEvent(

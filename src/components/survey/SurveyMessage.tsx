@@ -32,7 +32,7 @@ function SurveyFooter({ branding }: { branding: Branding }) {
         {branding.partners.map((p) => (
           <li key={p.name}>
             <PartnerLink href={p.href}>
-              <Image src={p.src} alt={`Logo: ${p.name}`} width={72} height={72} unoptimized={p.src.startsWith("data:")} />
+              <Image src={p.src} alt={`Logo: ${p.name}`} width={72} height={72} unoptimized={p.fill} />
               <span>{p.name}</span>
             </PartnerLink>
           </li>

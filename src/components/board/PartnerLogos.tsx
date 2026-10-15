@@ -8,7 +8,7 @@ export function PartnerLogos({ partners, names, className }: { partners: Partner
       {partners.map((p) => (
         <li key={p.name}>
           <span className={`tb-thanks-disc${p.fill ? " fill" : ""}`}>
-            <Image src={p.src} alt={`Logo: ${p.name}`} width={240} height={240} priority unoptimized={p.src.startsWith("data:")} />
+            <Image src={p.src} alt={`Logo: ${p.name}`} width={240} height={240} priority unoptimized={p.fill} />
           </span>
           {names && <span className="tb-thanks-name">{p.name}</span>}
         </li>

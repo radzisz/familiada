@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { coOrganizerFrom, HOST_PARTNER, isLogoSource, PARTNER_LOGO_MAX, partnersFor, storedText } from "@/lib/branding";
+import { coOrganizerFrom, HOST_PARTNER, isLogoSource, isServedLogo, logoUrl, PARTNER_LOGO_MAX, partnersFor, storedText } from "@/lib/branding";
 
+const ID_OK = "45d729d1-2925-4825-bea1-30dd887e13a4";
 const DATA = "data:image/webp;base64,UklGRhIAAABXRUJQ";
 
 describe("isLogoSource", () => {
@@ -32,20 +33,28 @@ describe("storedText", () => {
 });
 
 describe("partnersFor / coOrganizerFrom", () => {
-  it("always starts with YoungTree", () => {
+  const ID = "45d729d1-2925-4825-bea1-30dd887e13a4";
+
+  it("always starts with YoungTree; the co-organizer logo fills its disc", () => {
     expect(partnersFor(null)).toEqual([HOST_PARTNER]);
-    const co = { name: "Wspólnota", url: null, logo: DATA };
-    expect(partnersFor(co)).toEqual([HOST_PARTNER, { name: "Wspólnota", href: null, src: DATA, fill: true }]);
+    const co = { name: "Wspólnota", url: null, logo: logoUrl(ID, 7) };
+    expect(partnersFor(co)).toEqual([HOST_PARTNER, { name: "Wspólnota", href: null, src: logoUrl(ID, 7), fill: true }]);
   });
 
-  it("app logo files keep their margin in the disc", () => {
-    expect(partnersFor({ name: "W", url: "https://w.pl/", logo: "/logos/w.png" })[1]?.fill).toBe(false);
+  it("needs both a name and an uploaded logo (version)", () => {
+    expect(coOrganizerFrom(ID, { partner_name: null, partner_url: null, partner_logo_version: 1 })).toBeNull();
+    expect(coOrganizerFrom(ID, { partner_name: "W", partner_url: null, partner_logo_version: null })).toBeNull();
+    expect(coOrganizerFrom(ID, { partner_name: "W", partner_url: "", partner_logo_version: 3 }))
+      .toEqual({ name: "W", url: null, logo: `/api/logo/${ID}?v=3` });
   });
+});
 
-  it("needs both a name and a valid logo", () => {
-    expect(coOrganizerFrom(null, null, DATA)).toBeNull();
-    expect(coOrganizerFrom("W", null, null)).toBeNull();
-    expect(coOrganizerFrom("W", null, "https://x/y.png")).toBeNull();
-    expect(coOrganizerFrom("W", "", DATA)).toEqual({ name: "W", url: null, logo: DATA });
+describe("isServedLogo", () => {
+  it("recognizes only versioned logo URLs", () => {
+    expect(isServedLogo(logoUrl(ID_OK, 1712345678901))).toBe(true);
+    expect(isServedLogo(`/api/logo/${ID_OK}`)).toBe(false);
+    expect(isServedLogo(`/api/logo/${ID_OK}?v=1&x=2`)).toBe(false);
+    expect(isServedLogo("/api/logo/../admin?v=1")).toBe(false);
+    expect(isServedLogo(DATA)).toBe(false);
   });
 });

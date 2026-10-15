@@ -9,7 +9,10 @@ export interface Partner {
   name: string;
   href: string | null;
   src: string;
-  /** Logo wykadrowane w panelu (kwadrat z białym tłem) – wypełnia cały krążek, bez marginesu. */
+  /**
+   * Logo współorganizatora (z /api/logo, wykadrowane w panelu na białym tle): wypełnia cały krążek
+   * i idzie bez optymalizacji next/image (adres z `?v=`, a plik i tak jest mały).
+   */
   fill: boolean;
 }
 
@@ -29,7 +32,10 @@ export const PARTNER_LOGO_MAX = 300_000;
 export interface CoOrganizer {
   name: string;
   url: string | null;
-  /** data URL wykadrowanego logo albo ścieżka do pliku w /public/logos. */
+  /**
+   * Przy odczycie: adres logo (`/api/logo/<id>?v=<wersja>`). W PATCH: ten sam adres = logo bez zmian,
+   * data URL = nowe wykadrowane logo.
+   */
   logo: string;
 }
 
@@ -52,6 +58,16 @@ export function isLogoSource(src: string): boolean {
   return src.length <= PARTNER_LOGO_MAX && (DATA_LOGO.test(src) || PUBLIC_LOGO.test(src));
 }
 
+/** Adres logo współorganizatora; wersja zmienia się przy każdym wgraniu, więc obrazek można trzymać w cache na stałe. */
+export function logoUrl(eventId: string, version: number): string {
+  return `/api/logo/${eventId}?v=${version}`;
+}
+
+/** Czy to adres logo z `logoUrl` (w PATCH znaczy: logo bez zmian). */
+export function isServedLogo(src: string): boolean {
+  return /^\/api\/logo\/[0-9a-f-]{36}\?v=\d+$/.test(src);
+}
+
 /** Tekst do zapisu w bazie: bez spacji na brzegach, pusty = null. */
 export function storedText(input: string): string | null {
   const text = input.trim();
@@ -61,11 +77,19 @@ export function storedText(input: string): string | null {
 /** Organizatorzy do pokazania: zawsze YoungTree, potem współorganizator (jeśli ustawiony). */
 export function partnersFor(co: CoOrganizer | null): Partner[] {
   if (!co) return [HOST_PARTNER];
-  return [HOST_PARTNER, { name: co.name, href: co.url, src: co.logo, fill: co.logo.startsWith("data:") }];
+  return [HOST_PARTNER, { name: co.name, href: co.url, src: co.logo, fill: true }];
 }
 
-/** Współorganizator z kolumn bazy – istnieje tylko z nazwą i poprawnym logo. */
-export function coOrganizerFrom(name: string | null, url: string | null, logo: string | null): CoOrganizer | null {
-  if (!name || !logo || !isLogoSource(logo)) return null;
-  return { name, url: url || null, logo };
+export interface CoOrganizerColumns {
+  partner_name: string | null;
+  partner_url: string | null;
+  /** Wersja logo; null = logo nie wgrano. */
+  partner_logo_version: number | null;
+}
+
+/** Współorganizator z kolumn bazy – istnieje tylko z nazwą i wgranym logo. */
+export function coOrganizerFrom(eventId: string, columns: CoOrganizerColumns): CoOrganizer | null {
+  const { partner_name: name, partner_url: url, partner_logo_version: version } = columns;
+  if (!name || version === null) return null;
+  return { name, url: url || null, logo: logoUrl(eventId, version) };
 }
