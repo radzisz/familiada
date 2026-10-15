@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { finalTotal, gameReducer, initialGameState, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState } from "@/lib/game";
+import { finalTotal, gameReducer, initialGameState, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState, WRONG, FINAL_SECONDS, finalNextHint, finalPerson } from "@/lib/game";
 
 const answers = [{ label: "A", points: 40 }, { label: "B", points: 30 }, { label: "C", points: 20 }];
+/** Stan startowy z drużyną Żon przy odpowiadaniu (błędy trafiają do niej). */
+const W: GameState = { ...initialGameState(), turn: "w" };
 const run = (state: GameState, ...actions: Parameters<typeof gameReducer>[1][]) => actions.reduce(gameReducer, state);
 
 describe("gameReducer – rounds", () => {
   it("reveals a slot once and bumps rev", () => {
-    const s = run(initialGameState(), { type: "reveal", index: 1, slotCount: 3 }, { type: "reveal", index: 1, slotCount: 3 });
+    const s = run(W, { type: "reveal", index: 1, slotCount: 3 }, { type: "reveal", index: 1, slotCount: 3 });
     expect(s.revealed).toEqual([1]);
     expect(s.rev).toBe(1);
   });
@@ -14,13 +16,25 @@ describe("gameReducer – rounds", () => {
     const s0 = initialGameState();
     expect(gameReducer(s0, { type: "reveal", index: 5, slotCount: 3 })).toBe(s0);
   });
-  it("caps strikes at 3", () => {
-    const s = run(initialGameState(), { type: "strike" }, { type: "strike" }, { type: "strike" }, { type: "strike" });
-    expect(s.strikes).toBe(3);
+  it("caps strikes at 3 per team", () => {
+    const s = run(W, { type: "strike" }, { type: "strike" }, { type: "strike" }, { type: "strike" });
+    expect(s.strikes).toEqual({ w: 3, h: 0 });
   });
-  it("awards pot × multiplier only once per round and reveals the rest", () => {
+  it("gives the strike to the team that is answering", () => {
+    const s = run(W, { type: "strike" }, { type: "strike" }, { type: "setTurn", team: "h" }, { type: "strike" });
+    expect(s.strikes).toEqual({ w: 2, h: 1 });
+  });
+  it("ignores revealing an answer when no team is answering (it would not be clear whose pot it is)", () => {
+    const s0 = initialGameState();
+    expect(gameReducer(s0, { type: "reveal", index: 0, slotCount: 3 })).toBe(s0);
+  });
+  it("ignores a strike when no team is answering", () => {
+    const s0 = initialGameState();
+    expect(gameReducer(s0, { type: "strike" })).toBe(s0);
+  });
+  it("awards pot × multiplier only once per round and leaves hidden answers hidden", () => {
     const s = run(
-      { ...initialGameState(), round: 4 },
+      { ...W, round: 4 },
       { type: "reveal", index: 0, slotCount: 3 },
       { type: "reveal", index: 2, slotCount: 3 },
       { type: "award", team: "w", answers },
@@ -28,15 +42,15 @@ describe("gameReducer – rounds", () => {
     );
     expect(s.scoreW).toBe((40 + 20) * 2);
     expect(s.scoreH).toBe(0);
-    expect(s.revealed).toEqual([0, 1, 2]);
+    expect(s.revealed).toEqual([0, 2]);
   });
   it("uses ×3 in round 5", () => {
-    const s = run({ ...initialGameState(), round: 5 }, { type: "reveal", index: 1, slotCount: 3 }, { type: "award", team: "h", answers });
+    const s = run({ ...W, round: 5 }, { type: "reveal", index: 1, slotCount: 3 }, { type: "award", team: "h", answers });
     expect(s.scoreH).toBe(90);
   });
   it("next clears the board and moves to the next round", () => {
-    const s = run({ ...initialGameState(), round: 2, questionShown: true, strikes: 2, revealed: [0] }, { type: "next", answers, now: 1000 });
-    expect(s).toMatchObject({ view: "game", round: 3, strikes: 0, revealed: [] });
+    const s = run({ ...initialGameState(), round: 2, questionShown: true, strikes: { w: 2, h: 1 }, revealed: [0] }, { type: "next", answers, now: 1000 });
+    expect(s).toMatchObject({ view: "game", round: 3, strikes: { w: 0, h: 0 }, revealed: [] });
   });
   it("next after round 5 switches to the final and keeps scores", () => {
     const s = run({ ...initialGameState(), round: 5, questionShown: true, scoreW: 120, revealed: [0, 1] }, { type: "next", answers, now: 1000 });
@@ -69,6 +83,49 @@ describe("gameReducer – final", () => {
     );
     expect(s.final.p2[0]).toBe(NONE);
   });
+  it("a wrong answer counts 0 and both people may give a wrong answer", () => {
+    const s = run(
+      initialGameState(),
+      { type: "finalPick", person: "p1", question: 0, answer: WRONG },
+      { type: "finalPick", person: "p2", question: 0, answer: WRONG },
+      { type: "finalPick", person: "p2", question: 1, answer: 0 },
+    );
+    expect(s.final.p1[0]).toBe(WRONG);
+    expect(s.final.p2[0]).toBe(WRONG);
+    expect(finalTotal(s, finals)).toBe(40);
+  });
+  it("parseGameState keeps wrong answers in the final", () => {
+    const final = { p1: [WRONG, 0, NONE, NONE, NONE], p2: [NONE, NONE, NONE, NONE, NONE] };
+    expect(parseGameState({ final }).final.p1[0]).toBe(WRONG);
+  });
+  it("finalNext: timer for person 1, then person 2, then timer for person 2, then done", () => {
+    const s0 = initialGameState();
+    expect(finalPerson(s0)).toBe("p1");
+    const s1 = gameReducer(s0, { type: "finalNext", now: 1000 });
+    expect(s1).toMatchObject({ finalStep: 1, timerEndsAt: 1000 + FINAL_SECONDS.p1 * 1000 });
+    const s2 = gameReducer(s1, { type: "finalNext", now: 5000 });
+    expect(s2).toMatchObject({ finalStep: 2, timerEndsAt: null });
+    expect(finalPerson(s2)).toBe("p2");
+    const s3 = gameReducer(s2, { type: "finalNext", now: 9000 });
+    expect(s3).toMatchObject({ finalStep: 3, timerEndsAt: 9000 + FINAL_SECONDS.p2 * 1000 });
+    const s4 = gameReducer(s3, { type: "finalNext", now: 20000 });
+    expect(s4).toMatchObject({ finalStep: 4, timerEndsAt: null });
+    expect(finalNextHint(s4)).toBeNull();
+    expect(gameReducer(s4, { type: "finalNext", now: 30000 })).toBe(s4);
+  });
+  it("undo steps back through the final", () => {
+    const s = run(initialGameState(), { type: "finalNext", now: 1000 }, { type: "finalNext", now: 2000 }, { type: "undo" });
+    expect(s.finalStep).toBe(1);
+  });
+  it("finalClear and reset go back to person 1", () => {
+    const s = run(initialGameState(), { type: "finalNext", now: 1 }, { type: "finalNext", now: 2 });
+    expect(gameReducer(s, { type: "finalClear" }).finalStep).toBe(0);
+    expect(gameReducer(s, { type: "reset" }).finalStep).toBe(0);
+  });
+  it("parseGameState keeps a valid final step and drops a bad one", () => {
+    expect(parseGameState({ finalStep: 2 }).finalStep).toBe(2);
+    expect(parseGameState({ finalStep: 9 }).finalStep).toBe(0);
+  });
   it("sums both columns", () => {
     const s = run(
       initialGameState(),
@@ -88,10 +145,11 @@ describe("gameReducer – final", () => {
 describe("parseGameState", () => {
   it("falls back to defaults for garbage", () => {
     expect(parseGameState(null)).toEqual(initialGameState());
-    expect(parseGameState({ round: 99, strikes: -4, final: { p1: [1] } })).toMatchObject({ round: 1, strikes: 0 });
+    expect(parseGameState({ round: 99, strikes: -4, final: { p1: [1] } })).toMatchObject({ round: 1, strikes: { w: 0, h: 0 } });
+    expect(parseGameState({ strikes: { w: 9, h: 2 } }).strikes).toEqual({ w: 3, h: 2 });
   });
   it("round-trips a valid state", () => {
-    const s = run(initialGameState(), { type: "strike" }, { type: "setView", view: "final" });
+    const s = run(W, { type: "strike" }, { type: "setView", view: "final" });
     expect(parseGameState(JSON.parse(JSON.stringify(s)))).toEqual(s);
   });
 });
@@ -135,15 +193,22 @@ describe("gameReducer – turn (czyja pula)", () => {
     const s = run(initialGameState(), { type: "setTurn", team: "w" }, { type: "setTurn", team: "h" });
     expect(s.turn).toBe("h");
   });
-  it("revealAll only shows the remaining answers – no points and they do not count to the pot", () => {
-    const s = run(initialGameState(), { type: "setTurn", team: "w" }, { type: "reveal", index: 0, slotCount: 3 }, { type: "revealAll", answers });
-    expect(s).toMatchObject({ scoreW: 0, scoreH: 0, awarded: [], revealed: [0], uncovered: [1, 2] });
-    expect(potValue(s, answers)).toBe(40);
+  it("uncoverNext shows hidden answers one by one from the bottom – no points, not in the pot", () => {
+    const one = run(initialGameState(), { type: "setTurn", team: "w" }, { type: "reveal", index: 0, slotCount: 3 }, { type: "uncoverNext", slotCount: 3 });
+    expect(one).toMatchObject({ scoreW: 0, scoreH: 0, awarded: [], revealed: [0], uncovered: [2] });
+    const two = gameReducer(one, { type: "uncoverNext", slotCount: 3 });
+    expect(two.uncovered).toEqual([2, 1]);
+    expect(potValue(two, answers)).toBe(40);
   });
-  it("next awards only answers revealed in play (not the ones shown by revealAll)", () => {
+  it("uncoverNext does nothing when every answer is already shown", () => {
+    const s = run(W, { type: "reveal", index: 1, slotCount: 2 }, { type: "uncoverNext", slotCount: 2 });
+    expect(s.uncovered).toEqual([0]);
+    expect(gameReducer(s, { type: "uncoverNext", slotCount: 2 })).toBe(s);
+  });
+  it("next awards only answers revealed in play (not the ones shown by uncoverNext)", () => {
     const s = run(
       { ...initialGameState(), questionShown: true }, { type: "setTurn", team: "w" },
-      { type: "reveal", index: 0, slotCount: 3 }, { type: "revealAll", answers }, { type: "next", answers, now: 1000 },
+      { type: "reveal", index: 0, slotCount: 3 }, { type: "uncoverNext", slotCount: 3 }, { type: "next", answers, now: 1000 },
     );
     expect(s).toMatchObject({ scoreW: 40, round: 2, uncovered: [], revealed: [] });
   });
@@ -151,13 +216,13 @@ describe("gameReducer – turn (czyja pula)", () => {
     const s = run({ ...initialGameState(), round: 4, questionShown: true }, { type: "setTurn", team: "h" }, { type: "reveal", index: 1, slotCount: 3 }, { type: "next", answers, now: 1000 });
     expect(s).toMatchObject({ scoreH: 60, round: 5, turn: null, awarded: [4] });
   });
-  it("clicking an answer shown by revealAll does not add it to the pot", () => {
-    const s = run(initialGameState(), { type: "revealAll", answers }, { type: "reveal", index: 1, slotCount: 3 });
+  it("clicking an answer shown by uncoverNext does not add it to the pot", () => {
+    const s = run(initialGameState(), { type: "uncoverNext", slotCount: 3 }, { type: "reveal", index: 2, slotCount: 3 });
     expect(s.revealed).toEqual([]);
   });
-  it("conceal also hides an answer shown by revealAll", () => {
-    const s = run(initialGameState(), { type: "revealAll", answers }, { type: "conceal", index: 2 });
-    expect(s.uncovered).toEqual([0, 1]);
+  it("conceal also hides an answer shown by uncoverNext", () => {
+    const s = run(initialGameState(), { type: "uncoverNext", slotCount: 3 }, { type: "uncoverNext", slotCount: 3 }, { type: "conceal", index: 2 });
+    expect(s.uncovered).toEqual([1]);
   });
   it("parseGameState keeps uncovered answers", () => {
     expect(parseGameState({ uncovered: [1, 2] }).uncovered).toEqual([1, 2]);
@@ -171,7 +236,7 @@ describe("gameReducer – turn (czyja pula)", () => {
 
 describe("gameReducer – conceal", () => {
   it("conceal hides a revealed answer again", () => {
-    const s = run(initialGameState(), { type: "reveal", index: 0, slotCount: 3 }, { type: "reveal", index: 2, slotCount: 3 }, { type: "conceal", index: 0 });
+    const s = run(W, { type: "reveal", index: 0, slotCount: 3 }, { type: "reveal", index: 2, slotCount: 3 }, { type: "conceal", index: 0 });
     expect(s.revealed).toEqual([2]);
   });
   it("conceal of a hidden answer changes nothing", () => {
@@ -182,34 +247,34 @@ describe("gameReducer – conceal", () => {
 
 describe("gameReducer – undo", () => {
   it("undo reverts the last action (e.g. a wrong strike) and still bumps rev", () => {
-    const s = run(initialGameState(), { type: "reveal", index: 0, slotCount: 3 }, { type: "strike" }, { type: "undo" });
-    expect(s).toMatchObject({ strikes: 0, revealed: [0], rev: 3 });
+    const s = run(W, { type: "reveal", index: 0, slotCount: 3 }, { type: "strike" }, { type: "undo" });
+    expect(s).toMatchObject({ strikes: { w: 0, h: 0 }, revealed: [0], rev: 3 });
   });
   it("undo reverts an awarded pot", () => {
-    const s = run(initialGameState(), { type: "reveal", index: 0, slotCount: 3 }, { type: "award", team: "w", answers }, { type: "undo" });
+    const s = run(W, { type: "reveal", index: 0, slotCount: 3 }, { type: "award", team: "w", answers }, { type: "undo" });
     expect(s).toMatchObject({ scoreW: 0, awarded: [], revealed: [0] });
   });
   it("undo steps back several actions, then does nothing when history is empty", () => {
-    const s = run(initialGameState(), { type: "strike" }, { type: "strike" }, { type: "undo" }, { type: "undo" }, { type: "undo" });
-    expect(s.strikes).toBe(0);
+    const s = run(W, { type: "strike" }, { type: "strike" }, { type: "undo" }, { type: "undo" }, { type: "undo" });
+    expect(s.strikes).toEqual({ w: 0, h: 0 });
     expect(s.history).toEqual([]);
   });
   it("undo after next goes back to the previous round with its board", () => {
-    const s = run({ ...initialGameState(), round: 2, questionShown: true, revealed: [0, 1], strikes: 1 }, { type: "next", answers, now: 1000 }, { type: "undo" });
-    expect(s).toMatchObject({ round: 2, revealed: [0, 1], strikes: 1 });
+    const s = run({ ...initialGameState(), round: 2, questionShown: true, revealed: [0, 1], strikes: { w: 1, h: 0 } }, { type: "next", answers, now: 1000 }, { type: "undo" });
+    expect(s).toMatchObject({ round: 2, revealed: [0, 1], strikes: { w: 1, h: 0 } });
   });
   it("timer actions are not recorded in history", () => {
-    const s = run(initialGameState(), { type: "strike" }, { type: "timerStart", seconds: 20, now: 1000 }, { type: "undo" });
-    expect(s.strikes).toBe(0);
+    const s = run(W, { type: "strike" }, { type: "timerStart", seconds: 20, now: 1000 }, { type: "undo" });
+    expect(s.strikes).toEqual({ w: 0, h: 0 });
   });
   it("history is bounded", () => {
     const actions = Array.from({ length: MAX_HISTORY + 10 }, () => ({ type: "reveal" as const, index: 0, slotCount: 1 }))
       .flatMap((a) => [a, { type: "conceal" as const, index: 0 }]);
-    const s = run(initialGameState(), ...actions);
+    const s = run(W, ...actions);
     expect(s.history.length).toBe(MAX_HISTORY);
   });
   it("parseGameState keeps a valid history and drops a broken one", () => {
-    const s = run(initialGameState(), { type: "strike" });
+    const s = run(W, { type: "strike" });
     expect(parseGameState(JSON.parse(JSON.stringify(s))).history).toHaveLength(1);
     expect(parseGameState({ ...s, history: "x" }).history).toEqual([]);
   });

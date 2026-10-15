@@ -66,8 +66,12 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-slot.hidden .p { color: var(--led-dim); }
 .tb-slot.just { animation: tb-flip .5s ease; }
 @keyframes tb-flip { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
-.tb-strikes { display: flex; justify-content: center; gap: 14px; min-height: 64px; margin-top: 12px; }
-.tb-strikes span { font-family: var(--led-font); color: var(--bad); font-size: 76px; line-height: .9; text-shadow: 0 0 12px rgba(255, 59, 48, .6); }
+/* Błędy po bokach tablicy: Żony z lewej, Mężowie z prawej; niezapalone „lampki” są ledwo widoczne. */
+.tb-board { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: clamp(8px, 1.6vw, 24px); align-items: center; }
+.tb-center { min-width: 0; }
+.tb-xcol { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.tb-xcol span { font-family: var(--led-font); font-size: clamp(48px, 6vw, 96px); line-height: .9; color: color-mix(in srgb, var(--bad) 14%, transparent); }
+.tb-xcol span.on { color: var(--bad); text-shadow: 0 0 14px rgba(255, 59, 48, .7); }
 .tb-bigx {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
   font-family: var(--led-font); font-size: min(40vw, 420px); color: var(--bad); text-shadow: 0 0 40px rgba(255, 59, 48, .8); opacity: 0;
@@ -162,7 +166,9 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 @media (max-width: 720px) { .tb .tb-key button { grid-template-columns: 1.6em 1fr 2.6em 20px; font-size: 18px; } }
 
 /* Panel prowadzącego: trzy osobne sekcje – pula, odpowiedzi, nawigacja. */
-.tb-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tb-sections { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: stretch; }
+/* Na tablecie / laptopie sekcja nie rozciąga się na całą szerokość – przyciski zostają blisko siebie. */
+.tb-sec { flex: 0 1 auto; max-width: 100%; }
 .tb-sec { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; }
 .tb-sec h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 /* Na tablicy: drużyna z pulą świeci. */
@@ -185,7 +191,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb.pilot .tb-key button { padding: 5px 10px; font-size: 16px; }
 .tb.pilot .tb-key .p { font-size: 20px; }
 .tb.pilot .tb-panel { margin-top: 6px; padding: 6px; gap: 6px; }
-.tb.pilot .tb-sections { gap: 6px; }
+.tb.pilot .tb-sections { gap: 8px 20px; }
 .tb.pilot .tb-sec { padding: 4px 8px 8px; }
 .tb.pilot .tb-sec h3 { margin-bottom: 4px; font-size: 11px; }
 .tb.pilot .tb-hint { margin: 0; font-size: 12px; }
@@ -198,11 +204,14 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb button.soft.husband { --soft: var(--husband); }
 
 /* W każdej sekcji panelu przyciski rozsunięte do krawędzi (lewo / prawo) – trudniej trafić w zły. */
-.tb-sec .tb-row { justify-content: space-between; }
+.tb-sec .tb-row { justify-content: flex-start; gap: 8px; }
 
 /* „Dalej →” z opisem kroku pod spodem. */
-.tb button.tb-next { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15; }
-.tb button.tb-next small { font-size: 11px; font-weight: 400; opacity: .8; }
+/* „Dalej” to główny przycisk prowadzącego: zawsze w kolorze tablicy; dopisek w tej samej linii. */
+.tb button.tb-next { display: inline-flex; align-items: baseline; gap: 6px; background: var(--led); border-color: var(--led); color: #1a1100; font-weight: 700; }
+.tb button.tb-next:hover:not(:disabled) { background: #ffc54d; border-color: #ffc54d; }
+.tb button.tb-next:disabled { opacity: .45; }
+.tb button.tb-next small { font-size: 12px; font-weight: 400; opacity: .85; }
 
 /* Odliczanie po pokazaniu pytania: duża cyfra na półprzezroczystej nakładce nad polem odpowiedzi. */
 .tb-slots { position: relative; }
@@ -215,3 +224,72 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 /* Animuje się tylko cyfra (nowa co sekundę) – przyciemnienie stoi bez migania. */
 .tb-countdown span { display: inline-block; animation: tb-count .9s ease-out; }
 @keyframes tb-count { 0% { transform: scale(1.35); opacity: 0; } 25% { transform: scale(1); opacity: 1; } }
+
+/* Plansza nowej rundy / finału na cały ekran: rzepki (czas całości ustawia RoundIntro). */
+.tb-intro {
+  position: fixed; inset: 0; z-index: 50; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh;
+  background: rgba(5, 7, 13, .92); pointer-events: none; animation: tb-intro linear forwards;
+}
+@keyframes tb-intro { 0% { opacity: 0; } 6% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+.tb-intro-row { display: flex; gap: clamp(8px, 2vw, 32px); align-items: flex-end; }
+/* Rzepka przylatuje z lewej podskakując, skacze w miejscu, a na koniec ucieka w prawo (--d wejście, --o ucieczka). */
+.tb-turnip {
+  --d: 0ms; --o: 2000ms; width: clamp(70px, 10vw, 150px); height: auto; opacity: 0; transform-origin: 50% 100%;
+  animation: tb-turnip-in .9s ease-out forwards, tb-turnip-hop .7s ease-in-out infinite, tb-turnip-out .8s ease-in forwards;
+  animation-delay: var(--d), calc(var(--d) + .9s), var(--o);
+}
+@keyframes tb-turnip-in {
+  0% { opacity: 1; transform: translate(-110vw, 0) rotate(-20deg); }
+  30% { transform: translate(-70vw, -45%) rotate(-10deg); }
+  55% { transform: translate(-35vw, 0) scale(1.08, .9); }
+  80% { transform: translate(-8vw, -25%) rotate(6deg); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1.06, .92); }
+}
+@keyframes tb-turnip-hop {
+  0%, 100% { transform: translateY(0) scale(1.06, .92); }
+  15% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-22%) scale(.96, 1.05) rotate(4deg); }
+  85% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes tb-turnip-out {
+  0% { opacity: 1; transform: translate(0, 0) scale(1.06, .92); }
+  25% { transform: translate(15vw, -40%) rotate(12deg); }
+  50% { transform: translate(40vw, 0) scale(1.08, .9); }
+  75% { transform: translate(70vw, -30%) rotate(18deg); }
+  100% { opacity: 1; transform: translate(115vw, 0) rotate(25deg); }
+}
+@media (prefers-reduced-motion: reduce) { .tb-turnip { animation: none; opacity: 1; } }
+.tb-intro-label { font-family: var(--led-font); color: var(--led); font-size: clamp(36px, 6vw, 84px); letter-spacing: 4px; text-shadow: 0 0 18px color-mix(in srgb, var(--led) 60%, transparent); }
+
+/* Finał: błędna odpowiedź na tablicy */
+.tb-fans.wrong { color: var(--bad); }
+/* Finał na pilocie: wybór osoby i kafelki pytań z odpowiedziami */
+.tb-fpick { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.tb-fbox { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; background: var(--panel); }
+.tb-fbox.done { border-color: color-mix(in srgb, var(--led) 50%, var(--line)); }
+.tb-fbox-q { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
+.tb-fbox-q b { color: var(--led); }
+.tb-fbox-answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.tb .tb-fbox-answers button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; padding: 8px 10px; font-size: 16px; }
+.tb-fbox-answers .a { overflow-wrap: anywhere; }
+.tb-fbox-answers .p { font-family: var(--led-font); color: var(--led); font-size: 20px; }
+.tb .tb-fbox-answers button.on { background: color-mix(in srgb, var(--led) 25%, var(--panel)); border-color: var(--led); box-shadow: 0 0 0 1px var(--led) inset; }
+.tb .tb-fbox-answers button:disabled { opacity: .4; }
+.tb .tb-fbox-answers button.wrong { justify-content: center; color: #ff8a80; border-color: color-mix(in srgb, var(--bad) 60%, transparent); }
+.tb .tb-fbox-answers button.wrong.on { background: var(--bad); border-color: var(--bad); color: #fff; }
+/* Finał na tablicy: same odpowiedzi i punkty (bez pytań), rozdzielone liniami jak wiersze tablicy */
+.tb-fcol .tb-frow { padding: 8px 4px; border-bottom: 1px solid #1d2440; }
+.tb-fcol .tb-frow:last-child { border-bottom: 0; }
+/* Finał na pilocie: nawigacja wyraźnie oddzielona od pytań – przyklejona do dołu ekranu, z odstępem i cieniem */
+.tb-fpick + .tb-panel {
+  position: sticky; bottom: 0; z-index: 3; margin-top: 18px;
+  border: 2px solid color-mix(in srgb, var(--led) 45%, var(--line)); box-shadow: 0 -10px 24px rgba(0, 0, 0, .55);
+}
+/* Finał: kto teraz odpowiada (kolumna na tablicy, napis na pilocie) */
+.tb-fcol.active { border-color: var(--led); box-shadow: 0 0 18px color-mix(in srgb, var(--led) 35%, transparent); }
+.tb-fpick-who { margin: 0; font-size: 18px; color: var(--muted); }
+.tb-fpick-who b { color: var(--led); }
+/* Panel z samą nawigacją (finał) ma szerokość swoich przycisków, nie całego ekranu */
+.tb-panel.fit { width: fit-content; max-width: 100%; }
+.tb-key-warn { margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--led) 18%, transparent); color: var(--led); font-weight: 600; font-size: 14px; }
+.tb .tb-key button:disabled { opacity: .35; cursor: not-allowed; }

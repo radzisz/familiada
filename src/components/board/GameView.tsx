@@ -1,6 +1,6 @@
 "use client";
 
-import { isShown, multiplier, nextStep, potValue, type GameAction, type GameState, type NextStep } from "@/lib/game";
+import { isShown, MAX_STRIKES, multiplier, nextStep, potValue, type GameAction, type GameState, type NextStep } from "@/lib/game";
 import type { Board, BoardAnswer, BoardQuestion } from "@/lib/types";
 import { LedCounter } from "./LedCounter";
 import { useCountdown } from "./useCountdown";
@@ -42,6 +42,8 @@ export function GameView({ state, board, fx, sound, hideHost, pilot, dispatch, o
         <TeamScore team="h" name="MĘŻOWIE" active={state.turn === "h"} score={state.scoreH} gain={fx.gain} onStep={sound.tick} />
       </div>
       <div className="tb-board">
+        <StrikeColumn team="w" count={state.strikes.w} />
+        <div className="tb-center">
         <div className="tb-round">Runda {state.round}{m > 1 ? ` · punkty ×${m}` : ""}</div>
         <p className="tb-qtext">{questionText(question, state.questionShown)}</p>
         <div className="tb-slots">
@@ -56,9 +58,8 @@ export function GameView({ state, board, fx, sound, hideHost, pilot, dispatch, o
             <div className="tb-countdown" aria-live="polite"><span key={countdown}>{countdown}</span></div>
           )}
         </div>
-        <div className="tb-strikes" aria-live="polite">
-          {Array.from({ length: state.strikes }, (_, i) => <span key={i}>X</span>)}
         </div>
+        <StrikeColumn team="h" count={state.strikes.h} />
         {fx.bigX > 0 && <div key={fx.bigX} className="tb-bigx show" aria-hidden="true">X</div>}
       </div>
       {pilot && <AnswerKey question={question} state={state} dispatch={dispatch} />}
@@ -68,6 +69,16 @@ export function GameView({ state, board, fx, sound, hideHost, pilot, dispatch, o
 }
 
 const TEAM_NAME = { w: "ŻONY", h: "MĘŻOWIE" } as const;
+
+/** Kolumna błędów drużyny przy krawędzi tablicy: trzy „lampki X”, zapalone tyle, ile drużyna ma błędów. */
+function StrikeColumn({ team, count }: { team: "w" | "h"; count: number }) {
+  const name = team === "w" ? "Żony" : "Mężowie";
+  return (
+    <div className={`tb-xcol ${team}`} role="status" aria-label={`${name}: błędów ${count}`}>
+      {Array.from({ length: MAX_STRIKES }, (_, i) => <span key={i} className={i < count ? "on" : ""} aria-hidden="true">X</span>)}
+    </div>
+  );
+}
 
 /** Tekst pytania na tablicy: ukryty, dopóki prowadzący nie kliknie „Dalej” (odsłonięcie pytania to element gry). */
 function questionText(question: BoardQuestion | null, shown: boolean): string {
@@ -127,16 +138,19 @@ function Slot(p: { answer: BoardAnswer; index: number; shown: boolean; flip: boo
 function AnswerKey(p: { question: BoardQuestion | null; state: GameState; dispatch: (a: GameAction) => void }) {
   if (!p.question) return <p className="tb-key-q">Nie wybrano pytania do tej rundy – przypisz je w panelu rozgrywki.</p>;
   const slotCount = p.question.answers.length;
+  // Trafiona odpowiedź idzie do puli drużyny – bez wybranej drużyny nie da się jej odkryć.
+  const noTeam = p.state.turn === null;
   return (
     <div className="tb-key">
       <p className="tb-key-q">{p.question.text}</p>
+      {noTeam && <p className="tb-key-warn">Najpierw wybierz drużynę, która odpowiada – dopiero wtedy odkryjesz odpowiedź albo dasz błąd.</p>}
       <ol>
         {p.question.answers.map((a, i) => {
           const shown = isShown(p.state, i);
           return (
             <li key={i}>
               <button
-                type="button" className={shown ? "shown" : "concealed"} aria-pressed={shown}
+                type="button" className={shown ? "shown" : "concealed"} aria-pressed={shown} disabled={!shown && noTeam}
                 aria-label={`${a.label}, ${a.points} pkt – ${shown ? "widoczna na tablicy, kliknij, aby ukryć" : "ukryta, kliknij, aby pokazać"}`}
                 onClick={() => p.dispatch(shown ? { type: "conceal", index: i } : { type: "reveal", index: i, slotCount })}
               >
@@ -194,8 +208,12 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
         <section className="tb-sec" aria-label="Odpowiedzi">
           <h3>Odpowiedzi</h3>
           <div className="tb-row">
-            <button type="button" className="soft bad" onClick={() => dispatch({ type: "strike" })}>X (błąd)</button>
-            <button type="button" onClick={() => dispatch({ type: "revealAll", answers })}>Odkryj resztę</button>
+            <button
+              type="button" className="soft bad" disabled={state.turn === null}
+              title={state.turn === null ? "Najpierw wybierz drużynę, która odpowiada" : "Błąd drużyny, która odpowiada"}
+              onClick={() => dispatch({ type: "strike" })}
+            >X (błąd)</button>
+            <button type="button" title="Odsłania od dołu kolejną nieodkrytą odpowiedź – bez punktów" onClick={() => dispatch({ type: "uncoverNext", slotCount: answers.length })}>Pokaż kolejną</button>
           </div>
         </section>
         <section className="tb-sec" aria-label="Nawigacja">
@@ -208,7 +226,7 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
         </section>
       </div>
       <p className="tb-hint">
-        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Wybierz, kto odpowiada – do tej drużyny trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Odkryj resztę” tylko pokazuje odpowiedzi, bez punktów."}
+        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Wybierz, kto odpowiada – do tej drużyny trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Pokaż kolejną” odsłania od dołu nieodkryte odpowiedzi, bez punktów."}
       </p>
       {!pilot && (
         <p className="tb-hint">

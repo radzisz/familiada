@@ -5,8 +5,10 @@ export const MULTIPLIER: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 3
 export const MAX_STRIKES = 3;
 export const FINAL_TARGET = 200;
 export const NONE = -1;
+/** Finał: gracz odpowiedział, ale odpowiedzi nie ma na tablicy – 0 punktów, na tablicy „✗”. */
+export const WRONG = -2;
 /** Ile sekund odliczamy na tablicy po pokazaniu pytania (potem sygnał „piii”). */
-export const QUESTION_COUNTDOWN_S = 5;
+export const QUESTION_COUNTDOWN_S = 3;
 /** Ile ostatnich kroków można cofnąć przyciskiem „Wstecz”. */
 export const MAX_HISTORY = 30;
 
@@ -24,9 +26,10 @@ export interface GameState {
   questionEndsAt: number | null;
   /** Odpowiedzi odkryte w trakcie gry – tylko one liczą się do puli. */
   revealed: number[];
-  /** Odpowiedzi pokazane na koniec („Odkryj resztę”) – widoczne, ale bez punktów. */
+  /** Odpowiedzi pokazane na koniec rundy („Pokaż kolejną”, od dołu) – widoczne, ale bez punktów. */
   uncovered: number[];
-  strikes: number;
+  /** Błędy (X) w bieżącej rundzie osobno dla każdej drużyny – pokazywane po jej stronie tablicy. */
+  strikes: Record<Team, number>;
   scoreW: number;
   scoreH: number;
   /** Drużyna, która teraz odpowiada – do niej trafi pula rundy (null = jeszcze nie wybrana). */
@@ -35,6 +38,8 @@ export interface GameState {
   awarded: number[];
   final: { p1: number[]; p2: number[] };
   timerEndsAt: number | null;
+  /** Krok finału sterowany „Dalej” (0–FINAL_DONE): stoper osoby 1, osoba 2, stoper osoby 2, koniec. */
+  finalStep: number;
   /** Poprzednie stany (najstarszy pierwszy) – „Wstecz” cofa ostatnią akcję. */
   history: GameSnapshot[];
 }
@@ -44,7 +49,7 @@ export type GameSnapshot = Omit<GameState, "rev" | "history">;
 
 export type GameAction =
   | { type: "reveal"; index: number; slotCount: number }
-  | { type: "revealAll"; answers: BoardAnswer[] }
+  | { type: "uncoverNext"; slotCount: number }
   | { type: "setTurn"; team: Team }
   | { type: "conceal"; index: number }
   | { type: "strike" }
@@ -55,6 +60,7 @@ export type GameAction =
   | { type: "reset" }
   | { type: "finalPick"; person: Person; question: number; answer: number }
   | { type: "finalClear" }
+  | { type: "finalNext"; now: number }
   | { type: "timerStart"; seconds: number; now: number }
   | { type: "timerStop" }
   | { type: "undo" };
@@ -68,13 +74,14 @@ export function initialGameState(): GameState {
     questionEndsAt: null,
     revealed: [],
     uncovered: [],
-    strikes: 0,
+    strikes: { w: 0, h: 0 },
     scoreW: 0,
     scoreH: 0,
     turn: null,
     awarded: [],
     final: { p1: Array(FINAL_COUNT).fill(NONE), p2: Array(FINAL_COUNT).fill(NONE) },
     timerEndsAt: null,
+    finalStep: 0,
     history: [],
   };
 }
@@ -91,7 +98,7 @@ export function multiplier(round: number): number {
 }
 
 function freshRound(state: GameState, round: number): GameState {
-  return { ...state, round, questionShown: false, questionEndsAt: null, revealed: [], uncovered: [], strikes: 0, turn: null };
+  return { ...state, round, questionShown: false, questionEndsAt: null, revealed: [], uncovered: [], strikes: { w: 0, h: 0 }, turn: null };
 }
 
 /** Przyznaje pulę drużynie, która odpowiada (jeśli jest wybrana i pula jeszcze nie przyznana). */
@@ -100,10 +107,15 @@ function awardToTurn(state: GameState, answers: BoardAnswer[]): GameState {
   return award(state, state.turn, answers);
 }
 
-/** „Odkryj resztę”: pokazuje brakujące odpowiedzi bez punktów – pula dalej liczy tylko odkryte w grze. */
-function revealRest(state: GameState, answers: BoardAnswer[]): GameState {
-  const rest = range(answers.length).filter((i) => !state.revealed.includes(i));
-  return { ...state, uncovered: rest };
+/**
+ * „Pokaż kolejną”: jak w programie – po rundzie odsłania jedną nieodkrytą odpowiedź, zaczynając od dołu tablicy.
+ * Nikt nie dostaje za nią punktów i nie wchodzi do puli.
+ */
+function uncoverNext(state: GameState, slotCount: number): GameState {
+  assert(Number.isInteger(slotCount) && slotCount >= 0 && slotCount <= BOARD_SLOTS, "uncoverNext: slotCount out of range");
+  const next = range(slotCount).reverse().find((i) => !isShown(state, i));
+  if (next === undefined) return state;
+  return { ...state, uncovered: [...state.uncovered, next] };
 }
 
 /** Czy odpowiedź jest widoczna na tablicy (odkryta w grze albo pokazana na koniec). */
@@ -130,8 +142,10 @@ function next(state: GameState, answers: BoardAnswer[], now: number): GameState 
   return freshRound(done, state.round + 1);
 }
 
+/** Trafiona odpowiedź – liczy się do puli, więc musi być wybrana drużyna, która odpowiada. */
 function reveal(state: GameState, index: number, slotCount: number): GameState {
-  // Odpowiedź już widoczna (także pokazana przez „Odkryj resztę”) nie trafia drugi raz – i nie wchodzi do puli.
+  if (!state.turn) return state;
+  // Odpowiedź już widoczna (także pokazana przez „Pokaż kolejną”) nie trafia drugi raz – i nie wchodzi do puli.
   if (index < 0 || index >= slotCount || isShown(state, index)) return state;
   return { ...state, revealed: [...state.revealed, index] };
 }
@@ -142,22 +156,55 @@ function conceal(state: GameState, index: number): GameState {
   return { ...state, revealed: state.revealed.filter((i) => i !== index), uncovered: state.uncovered.filter((i) => i !== index) };
 }
 
+/** Pula dla drużyny; nieodkryte odpowiedzi zostają zakryte – pokazuje się je potem „Pokaż kolejną”. */
 function award(state: GameState, team: Team, answers: BoardAnswer[]): GameState {
-  const all = range(answers.length);
-  if (state.awarded.includes(state.round)) return { ...state, revealed: all };
+  if (state.awarded.includes(state.round)) return state;
   const value = potValue(state, answers) * multiplier(state.round);
   const scores = team === "w" ? { scoreW: state.scoreW + value } : { scoreH: state.scoreH + value };
-  return { ...state, ...scores, awarded: [...state.awarded, state.round], revealed: all };
+  return { ...state, ...scores, awarded: [...state.awarded, state.round] };
+}
+
+/** Czas na odpowiedzi w finale (sekundy): osoba 1 i osoba 2. */
+export const FINAL_SECONDS: Record<Person, number> = { p1: 20, p2: 25 };
+/** Kroki finału: 0 osoba 1 gotowa, 1 stoper osoby 1, 2 osoba 2 gotowa, 3 stoper osoby 2, 4 koniec. */
+export const FINAL_DONE = 4;
+
+/** Kto teraz odpowiada w finale (wynika z kroku). */
+export function finalPerson(state: GameState): Person {
+  return state.finalStep < 2 ? "p1" : "p2";
+}
+
+/** Dopisek pod „Dalej” w finale: co zrobi następne kliknięcie (null = finał skończony). */
+export function finalNextHint(state: GameState): string | null {
+  const hints = [`start ${FINAL_SECONDS.p1} s · osoba 1`, "osoba 2", `start ${FINAL_SECONDS.p2} s · osoba 2`, "koniec finału"];
+  return hints[state.finalStep] ?? null;
+}
+
+/** „Dalej” w finale: stoper osoby 1 → osoba 2 → stoper osoby 2 → koniec (przejście zatrzymuje stoper). */
+function finalNext(state: GameState, now: number): GameState {
+  if (state.finalStep >= FINAL_DONE) return state;
+  const step = state.finalStep + 1;
+  const timing = step === 1 || step === 3;
+  const seconds = step === 1 ? FINAL_SECONDS.p1 : FINAL_SECONDS.p2;
+  return { ...state, finalStep: step, timerEndsAt: timing ? now + seconds * 1000 : null };
+}
+
+/** Błąd (X) dla drużyny, która teraz odpowiada (najwyżej MAX_STRIKES); bez wybranej drużyny nic się nie dzieje. */
+function strike(state: GameState): GameState {
+  if (!state.turn || state.strikes[state.turn] >= MAX_STRIKES) return state;
+  return { ...state, strikes: { ...state.strikes, [state.turn]: state.strikes[state.turn] + 1 } };
 }
 
 function finalPick(state: GameState, person: Person, question: number, answer: number): GameState {
   assert(question >= 0 && question < FINAL_COUNT, "finalPick: question index out of range");
+  assert(Number.isInteger(answer) && answer >= WRONG, "finalPick: bad answer index");
   const other = person === "p1" ? state.final.p2 : state.final.p1;
   // Osoba 2 nie może powtórzyć odpowiedzi osoby 1.
-  if (person === "p2" && answer !== NONE && state.final.p1[question] === answer) return state;
+  // Błędna odpowiedź (WRONG) i „brak” (NONE) mogą się powtarzać – blokujemy tylko odpowiedzi z tablicy.
+  if (person === "p2" && answer >= 0 && state.final.p1[question] === answer) return state;
   const column = state.final[person].map((v, i) => (i === question ? answer : v));
   // Jeśli osoba 1 zmieni wybór na ten, który ma osoba 2 – osobie 2 czyścimy pole.
-  const cleared = person === "p1" && answer !== NONE && other[question] === answer
+  const cleared = person === "p1" && answer >= 0 && other[question] === answer
     ? other.map((v, i) => (i === question ? NONE : v))
     : other;
   const final = person === "p1" ? { p1: column, p2: cleared } : { p1: cleared, p2: column };
@@ -167,17 +214,18 @@ function finalPick(state: GameState, person: Person, question: number, answer: n
 function applyAction(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "reveal": return reveal(state, action.index, action.slotCount);
-    case "revealAll": return revealRest(state, action.answers);
+    case "uncoverNext": return uncoverNext(state, action.slotCount);
     case "setTurn": return state.turn === action.team ? state : { ...state, turn: action.team };
     case "conceal": return conceal(state, action.index);
-    case "strike": return { ...state, strikes: Math.min(MAX_STRIKES, state.strikes + 1) };
+    case "strike": return strike(state);
     case "award": return award(state, action.team, action.answers);
     case "next": return next(state, action.answers, action.now);
     case "setRound": return freshRound(state, Math.min(ROUND_COUNT, Math.max(1, action.round)));
     case "setView": return { ...state, view: action.view };
     case "reset": return { ...initialGameState(), view: state.view, final: state.final };
     case "finalPick": return finalPick(state, action.person, action.question, action.answer);
-    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null };
+    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0 };
+    case "finalNext": return finalNext(state, action.now);
     case "timerStart": return { ...state, timerEndsAt: action.now + action.seconds * 1000 };
     case "timerStop": return { ...state, timerEndsAt: null };
     case "undo": return undo(state);
@@ -206,7 +254,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   const next = applyAction(state, action);
   if (next === state) return state;
   assert(next.revealed.length <= BOARD_SLOTS, "gameReducer: too many revealed slots");
-  assert(next.strikes <= MAX_STRIKES, "gameReducer: too many strikes");
+  assert(next.strikes.w <= MAX_STRIKES && next.strikes.h <= MAX_STRIKES, "gameReducer: too many strikes");
   const history = UNRECORDED.has(action.type) ? next.history : [...state.history, snapshot(state)].slice(-MAX_HISTORY);
   assert(history.length <= MAX_HISTORY, "gameReducer: history too long");
   return { ...next, history, rev: state.rev + 1 };
@@ -215,8 +263,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 /** Suma punktów finału obu osób. */
 export function finalTotal(state: GameState, finalAnswers: BoardAnswer[][]): number {
   const pts = (col: number[]) =>
-    col.reduce((sum, a, k) => sum + (a === NONE ? 0 : (finalAnswers[k]?.[a]?.points ?? 0)), 0);
+    col.reduce((sum, a, k) => sum + (a < 0 ? 0 : (finalAnswers[k]?.[a]?.points ?? 0)), 0);
   return pts(state.final.p1) + pts(state.final.p2);
+}
+
+/** Liczba błędów drużyny z zapisu w bazie (stary zapis – jedna liczba – traktujemy jak brak błędów). */
+function strikeCount(raw: unknown, team: Team): number {
+  const v = raw && typeof raw === "object" ? (raw as Record<string, unknown>)[team] : undefined;
+  return typeof v === "number" && Number.isInteger(v) ? Math.min(MAX_STRIKES, Math.max(0, v)) : 0;
 }
 
 /** Bezpieczne odtworzenie stanu z bazy: brakujące lub błędne pola zastępowane domyślnymi. */
@@ -235,7 +289,7 @@ export function parseGameState(raw: unknown): GameState {
     questionEndsAt: Number.isFinite(r.questionEndsAt) ? r.questionEndsAt! : null,
     revealed: Array.isArray(r.revealed) ? r.revealed.filter((x) => Number.isInteger(x)).slice(0, BOARD_SLOTS) : [],
     uncovered: Array.isArray(r.uncovered) ? r.uncovered.filter((x) => Number.isInteger(x)).slice(0, BOARD_SLOTS) : [],
-    strikes: Number.isInteger(r.strikes) ? Math.min(MAX_STRIKES, Math.max(0, r.strikes!)) : 0,
+    strikes: { w: strikeCount(r.strikes, "w"), h: strikeCount(r.strikes, "h") },
     scoreW: Number.isFinite(r.scoreW) ? r.scoreW! : 0,
     scoreH: Number.isFinite(r.scoreH) ? r.scoreH! : 0,
     turn: r.turn === "w" || r.turn === "h" ? r.turn : null,
@@ -245,6 +299,7 @@ export function parseGameState(raw: unknown): GameState {
       p2: nums(r.final?.p2, FINAL_COUNT) ?? base.final.p2,
     },
     timerEndsAt: Number.isFinite(r.timerEndsAt) ? r.timerEndsAt! : null,
+    finalStep: Number.isInteger(r.finalStep) && r.finalStep! >= 0 && r.finalStep! <= FINAL_DONE ? r.finalStep! : 0,
     history: parseHistory(r.history),
   };
 }
