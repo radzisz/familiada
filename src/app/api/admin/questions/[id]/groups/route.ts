@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: Params): Promise<NextRespon
   const { id } = await params;
   const body = await parseBody(req, GroupOpSchema);
   if (body instanceof NextResponse) return body;
-  return adminRoute("question.groups", async ({ db, event }) => {
+  return adminRoute(req, "question.groups", async ({ db, event }) => {
     const question = await fetchQuestion(db, event.id, id);
     if (!question) return jsonError("Nie ma takiego pytania.", 404);
     await applyGroupOp(db, question.id, body);

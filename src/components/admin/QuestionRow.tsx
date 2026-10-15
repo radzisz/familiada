@@ -3,31 +3,23 @@
 import { useState } from "react";
 import type { Audience } from "@/lib/types";
 import { AudienceSelect } from "./AudienceSelect";
+import { PencilIcon, RestoreIcon, TrashIcon } from "./icons";
 import { AUDIENCE_LABEL, type OverviewQuestion } from "./types";
 
 interface Props {
   q: OverviewQuestion;
   index: number;
   last: boolean;
-  selected: boolean;
-  plan: string | null;
-  onSelect: () => void;
   onMove: (delta: number) => void;
   onPatch: (body: { text?: string; audience?: Audience; hidden?: boolean }) => Promise<void>;
 }
 
-function status(q: OverviewQuestion): { text: string; cls: string } {
-  if (q.answers === 0) return { text: "brak odpowiedzi", cls: "none" };
-  if (q.ungrouped > 0) return { text: `niepogrupowane (${q.ungrouped})`, cls: "todo" };
-  return { text: "pogrupowane", cls: "ok" };
-}
-
+/** Definicja jednego pytania: treść, dla kogo, kolejność, ukrywanie (bez odpowiedzi). */
 export function QuestionRow(p: Props) {
   const { q } = p;
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(q.text);
   const [audience, setAudience] = useState<Audience>(q.audience);
-  const st = status(q);
 
   if (editing) {
     return (
@@ -43,22 +35,23 @@ export function QuestionRow(p: Props) {
   }
 
   return (
-    <li className={`ad-q${p.selected ? " sel" : ""}${q.hidden ? " hid" : ""}`}>
-      <button type="button" className="ad-q-main" onClick={p.onSelect} aria-pressed={p.selected}>
+    <li className={`ad-q${q.hidden ? " hid" : ""}`}>
+      <div className="ad-q-main">
         <span className="ad-q-text">{p.index + 1}. {q.text}</span>
         <span className="ad-q-meta">
           <span className={`ad-aud ${q.audience}`}>{AUDIENCE_LABEL[q.audience]}</span>
-          <span>{q.answers} odp.</span>
-          <span className={`ad-st ${st.cls}`}>{st.text}</span>
-          {p.plan && <span className="ad-st plan">wybrane do gry: {p.plan}</span>}
-          {q.hidden && <span className="ad-st none">ukryte</span>}
+          {q.hidden && <span className="ad-st none">ukryte – nie ma go w ankiecie</span>}
         </span>
-      </button>
+      </div>
       <div className="ad-q-tools">
         <button type="button" aria-label="W górę" disabled={p.index === 0} onClick={() => p.onMove(-1)}>↑</button>
         <button type="button" aria-label="W dół" disabled={p.last} onClick={() => p.onMove(1)}>↓</button>
-        <button type="button" onClick={() => setEditing(true)}>Edytuj</button>
-        <button type="button" onClick={() => void p.onPatch({ hidden: !q.hidden })}>{q.hidden ? "Pokaż" : "Ukryj"}</button>
+        <button type="button" className="ad-icon" aria-label="Edytuj pytanie" title="Edytuj" onClick={() => setEditing(true)}>
+          <PencilIcon />
+        </button>
+        {q.hidden
+          ? <button type="button" className="ad-icon" aria-label="Przywróć pytanie do ankiety" title="Przywróć" onClick={() => void p.onPatch({ hidden: false })}><RestoreIcon /></button>
+          : <button type="button" className="ad-icon" aria-label="Usuń pytanie z ankiety" title="Usuń z ankiety" onClick={() => void p.onPatch({ hidden: true })}><TrashIcon /></button>}
       </div>
     </li>
   );

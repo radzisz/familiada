@@ -1,0 +1,233 @@
+{
+  "_info": "Pule odpowiedzi testowych: dla każdego pytania lista pojęć [waga, wariant, wariant…]. Warianty (literówki, synonimy) sprawdzają grupowanie.",
+  "Na co Polacy najczęściej wydają za dużo?": [
+    [9, "Jedzenie", "jedzenie", "żywność", "zakupy spożywcze"],
+    [6, "Ubrania", "ciuchy", "Ubrania!", "odzież"],
+    [5, "Alkohol", "alkohol", "wódka", "piwo"],
+    [4, "Elektronika", "telefony", "elektronika", "nowy telefon"],
+    [3, "Wakacje", "wakacje", "urlop", "wyjazdy"],
+    [2, "Samochód", "auto", "samochód"],
+    [1, "Papierosy", "fajki"]
+  ],
+  "Co najczęściej kupujemy pod wpływem impulsu?": [
+    [8, "Słodycze", "słodycze", "slodycze", "batonik", "czekolada"],
+    [6, "Ubrania", "ciuchy", "ubrania", "bluzka"],
+    [4, "Gadżety", "gadżety", "gadzety", "drobiazgi"],
+    [3, "Kosmetyki", "kosmetyki", "perfumy"],
+    [3, "Buty", "buty", "Buty!"],
+    [2, "Książki", "książka"],
+    [1, "Kwiaty", "kwiatki"]
+  ],
+  "Jakiego rachunku najbardziej nie lubisz płacić?": [
+    [9, "Za prąd", "prąd", "prad", "za prąd", "energia"],
+    [6, "Za gaz", "gaz", "ogrzewanie"],
+    [5, "Podatki", "podatek", "PIT", "podatki"],
+    [4, "Czynsz", "czynsz", "czynsz za mieszkanie"],
+    [3, "Kredyt", "rata kredytu", "kredyt"],
+    [2, "Mandat", "mandaty"],
+    [1, "Telefon", "abonament"]
+  ],
+  "Najczęstszy powód kłótni o pieniądze w małżeństwie": [
+    [9, "Zbędne zakupy", "niepotrzebne zakupy", "zbędne zakupy", "wydawanie na głupoty"],
+    [6, "Brak oszczędności", "brak oszczędności", "nie odkładamy"],
+    [5, "Ubrania", "ciuchy", "ubrania żony"],
+    [4, "Teściowie", "teściowa", "rodzina", "pożyczki dla rodziny"],
+    [3, "Hobby", "hobby męża", "wędkowanie", "gry"],
+    [2, "Długi", "kredyt", "długi"],
+    [1, "Prezenty", "prezenty"]
+  ],
+  "Gdzie w domu chowa się pieniądze „na czarną godzinę”?": [
+    [9, "W skarpecie", "skarpeta", "w skarpecie", "Skarpetka"],
+    [7, "Pod materacem", "materac", "pod materacem"],
+    [5, "W książce", "w książce", "książka", "w Biblii"],
+    [4, "W szafie", "szafa", "między ubraniami"],
+    [3, "W słoiku", "słoik", "słoik w kuchni"],
+    [2, "W zamrażarce", "zamrażarka"],
+    [1, "W sejfie", "sejf"]
+  ],
+  "Na co warto odkładać pieniądze?": [
+    [9, "Na emeryturę", "emerytura", "na emeryturę", "starość"],
+    [7, "Na dzieci", "dzieci", "edukacja dzieci", "studia dzieci"],
+    [6, "Na mieszkanie", "mieszkanie", "dom", "remont"],
+    [4, "Na wakacje", "wakacje", "podróże"],
+    [3, "Na czarną godzinę", "czarna godzina", "na nieprzewidziane wydatki"],
+    [2, "Na samochód", "auto"],
+    [1, "Na wesele", "wesele dzieci"]
+  ],
+  "Pierwsza rzecz po wygraniu miliona złotych": [
+    [8, "Dom", "dom", "kupić dom", "mieszkanie"],
+    [7, "Spłata długów", "spłacić kredyt", "spłata kredytu", "długi"],
+    [6, "Podróż", "wakacje", "podróż dookoła świata", "wycieczka"],
+    [5, "Samochód", "auto", "nowy samochód"],
+    [4, "Pomoc rodzinie", "rozdać rodzinie", "pomóc dzieciom"],
+    [3, "Ofiara na Kościół", "dać na kościół", "na misje"],
+    [1, "Nic nikomu nie mówić", "nikomu nie mówić"]
+  ],
+  "Co najbardziej podrożało w ostatnich latach?": [
+    [9, "Jedzenie", "jedzenie", "żywność", "masło"],
+    [8, "Prąd", "prąd", "energia", "prad"],
+    [6, "Mieszkania", "mieszkania", "nieruchomości", "czynsze"],
+    [4, "Paliwo", "benzyna", "paliwo"],
+    [3, "Gaz", "gaz"],
+    [2, "Wakacje", "wakacje"],
+    [1, "Kawa", "kawa"]
+  ],
+  "Na czym najłatwiej zaoszczędzić w domowym budżecie?": [
+    [8, "Na jedzeniu", "jedzenie", "na jedzeniu", "jedzenie na mieście"],
+    [6, "Na prądzie", "prąd", "gaszenie światła"],
+    [5, "Na ubraniach", "ubrania", "ciuchy"],
+    [4, "Na rozrywce", "rozrywka", "kino", "restauracje"],
+    [3, "Na abonamentach", "abonamenty", "Netflix", "subskrypcje"],
+    [2, "Na papierosach", "papierosy"],
+    [1, "Na niczym", "nie da się"]
+  ],
+  "Komu najczęściej pożyczamy pieniądze?": [
+    [9, "Rodzinie", "rodzina", "rodzinie", "rodzeństwu", "bratu"],
+    [8, "Przyjaciołom", "przyjaciel", "przyjaciołom", "znajomym", "kumplowi"],
+    [5, "Dzieciom", "dzieci", "dzieciom", "synowi"],
+    [3, "Rodzicom", "rodzice", "mamie"],
+    [2, "Sąsiadom", "sąsiad"],
+    [1, "Nikomu", "nikomu"]
+  ],
+  "Na co mąż wydaje pieniądze bez sensu?": [
+    [9, "Narzędzia", "narzędzia", "narzedzia", "wiertarka"],
+    [7, "Elektronika", "elektronika", "gadżety", "telefon"],
+    [5, "Samochód", "auto", "części do auta", "samochód"],
+    [4, "Hobby", "wędkarstwo", "sprzęt wędkarski", "rower"],
+    [3, "Gry", "gry komputerowe", "gry"],
+    [2, "Piwo", "piwo", "alkohol"],
+    [1, "Zegarki", "zegarek"]
+  ],
+  "Co mąż kupuje „bo było w promocji”?": [
+    [9, "Narzędzia", "narzędzia", "wkrętarka", "śrubki"],
+    [7, "Piwo", "piwo", "Piwo!", "zgrzewka piwa"],
+    [5, "Elektronika", "kable", "ładowarki", "elektronika"],
+    [4, "Jedzenie", "kiełbasa", "mięso", "jedzenie"],
+    [3, "Ubrania", "skarpety", "koszulki"],
+    [2, "Chemia", "płyn do spryskiwaczy"],
+    [1, "Nic", "nic"]
+  ],
+  "Czego mąż w domu nigdy nie wyrzuci?": [
+    [9, "Starych ubrań", "stare ubrania", "starych koszulek", "dresy"],
+    [7, "Kabli", "kable", "kabli", "ładowarki"],
+    [6, "Narzędzi", "narzędzia", "śrubki", "gwoździe"],
+    [4, "Pudełek", "pudełka", "kartony"],
+    [3, "Gazet", "gazety", "stare gazety"],
+    [2, "Butów", "stare buty"],
+    [1, "Pilotów", "piloty"]
+  ],
+  "W jakim sklepie mąż może spędzić cały dzień?": [
+    [10, "Budowlany", "budowlany", "Castorama", "Leroy Merlin", "market budowlany"],
+    [7, "Elektroniczny", "Media Markt", "RTV AGD", "elektroniczny"],
+    [4, "Motoryzacyjny", "motoryzacyjny", "części samochodowe"],
+    [3, "Wędkarski", "wędkarski"],
+    [2, "Sportowy", "Decathlon", "sportowy"],
+    [1, "Księgarnia", "księgarnia"]
+  ],
+  "Co mąż robi, kiedy dostaje premię?": [
+    [9, "Oddaje żonie", "oddaje żonie", "daje żonie", "żonie"],
+    [6, "Kupuje gadżet", "kupuje gadżet", "elektronika", "nowy telefon"],
+    [5, "Odkłada", "odkłada", "oszczędza", "na konto"],
+    [4, "Świętuje", "piwo", "impreza", "świętuje"],
+    [3, "Chwali się", "chwali się", "mówi wszystkim"],
+    [2, "Ukrywa", "chowa", "ukrywa"],
+    [1, "Zabiera rodzinę na obiad", "obiad na mieście"]
+  ],
+  "Na co żona wydaje pieniądze bez sensu?": [
+    [10, "Ubrania", "ciuchy", "ubrania", "Ubrania!", "bluzki"],
+    [8, "Kosmetyki", "kosmetyki", "kremy", "perfumy"],
+    [6, "Buty", "buty", "Buty"],
+    [4, "Dekoracje", "dekoracje", "poduszki", "świeczki"],
+    [3, "Torebki", "torebki", "torebka"],
+    [2, "Fryzjer", "fryzjer", "paznokcie"],
+    [1, "Kwiaty", "kwiaty"]
+  ],
+  "Co żona kupuje „bo było w promocji”?": [
+    [9, "Ubrania", "ciuchy", "ubrania", "sukienka"],
+    [7, "Kosmetyki", "kosmetyki", "szampon", "krem"],
+    [5, "Buty", "buty"],
+    [4, "Garnki", "garnki", "patelnie", "naczynia"],
+    [3, "Chemia", "proszek do prania", "płyn do naczyń", "chemia"],
+    [2, "Zabawki", "zabawki dla dzieci"],
+    [1, "Świece", "świeczki"]
+  ],
+  "Czego żona ma w domu za dużo?": [
+    [10, "Ubrań", "ubrań", "ciuchów", "ubrania"],
+    [8, "Butów", "butów", "buty", "Butów!"],
+    [6, "Kosmetyków", "kosmetyków", "kremów"],
+    [4, "Torebek", "torebek", "torebki"],
+    [3, "Poduszek", "poduszek", "poduszki"],
+    [2, "Kwiatów", "kwiatków"],
+    [1, "Garnków", "garnków"]
+  ],
+  "W jakim sklepie żona może spędzić cały dzień?": [
+    [10, "Odzieżowy", "ciuchy", "sklep z ubraniami", "odzieżowy", "Zara"],
+    [7, "Drogeria", "Rossmann", "drogeria", "Hebe"],
+    [5, "Obuwniczy", "obuwniczy", "z butami", "CCC"],
+    [4, "IKEA", "Ikea", "IKEA", "meblowy"],
+    [2, "Galeria handlowa", "galeria", "centrum handlowe"],
+    [1, "Księgarnia", "Empik"]
+  ],
+  "Co żona robi, kiedy dostaje premię?": [
+    [9, "Zakupy", "zakupy", "idzie na zakupy", "shopping"],
+    [7, "Odkłada", "odkłada", "oszczędza", "na konto"],
+    [5, "Wydaje na dzieci", "dla dzieci", "na dzieci"],
+    [4, "Kupuje coś dla siebie", "coś dla siebie", "kosmetyki"],
+    [3, "Mówi mężowi", "chwali się mężowi"],
+    [2, "Ukrywa", "nie mówi mężowi"],
+    [1, "Spa", "spa"]
+  ],
+  "Rzecz, którą trzymamy w szufladzie, „bo się przyda”": [
+    [10, "Kable", "kable", "kabelki", "ładowarki"],
+    [7, "Gumki recepturki", "gumki", "gumki recepturki", "recepturki"],
+    [6, "Reklamówki", "reklamówki", "torebki foliowe", "siatki"],
+    [4, "Baterie", "baterie", "stare baterie"],
+    [3, "Klucze", "klucze", "nieznane klucze"],
+    [2, "Instrukcje", "instrukcje obsługi"],
+    [1, "Śrubki", "śrubki"]
+  ],
+  "Co dziecko najczęściej chce kupić przy kasie?": [
+    [12, "Słodycze", "słodycze", "slodycze", "batonik", "lizak", "czekolada"],
+    [7, "Gumy", "gumy do żucia", "guma", "gumy"],
+    [5, "Jajko niespodzianka", "kinder niespodzianka", "jajko niespodzianka", "Kinder"],
+    [3, "Zabawka", "zabawka", "zabawki"],
+    [2, "Napój", "picie", "sok"],
+    [1, "Naklejki", "naklejki"]
+  ],
+  "Czego szukamy w domu tuż przed wyjściem?": [
+    [12, "Kluczy", "kluczy", "klucze", "Kluczy!", "klucze do auta"],
+    [8, "Telefonu", "telefonu", "telefon", "komórki"],
+    [5, "Portfela", "portfela", "portfel"],
+    [4, "Okularów", "okularów", "okulary"],
+    [3, "Butów", "butów", "drugiego buta"],
+    [2, "Parasola", "parasolki"],
+    [1, "Dokumentów", "dowodu"]
+  ],
+  "Za co dziecko może dostać kieszonkowe?": [
+    [9, "Za oceny", "dobre oceny", "za oceny", "świadectwo"],
+    [8, "Za sprzątanie", "sprzątanie", "sprzątanie pokoju", "porządek"],
+    [5, "Za pomoc w domu", "pomoc w domu", "pomaganie", "obowiązki"],
+    [4, "Za nic", "za nic", "co tydzień", "regularnie"],
+    [3, "Za wyniesienie śmieci", "śmieci", "wynoszenie śmieci"],
+    [2, "Za zachowanie", "grzeczność", "dobre zachowanie"],
+    [1, "Za zmywanie", "zmywanie"]
+  ],
+  "Najdziwniejszy prezent ślubny, jaki można dostać": [
+    [7, "Odkurzacz", "odkurzacz", "Odkurzacz!"],
+    [6, "Komplet garnków", "garnki", "komplet garnków"],
+    [5, "Obraz", "obraz", "portret", "obraz z naszym zdjęciem"],
+    [4, "Zwierzę", "kura", "koza", "żywy kogut"],
+    [4, "Żyrandol", "żyrandol", "lampa"],
+    [3, "Kalendarz", "kalendarz"],
+    [2, "Taczka", "taczka", "łopata"]
+  ],
+  "Co robimy z drobnymi z portfela?": [
+    [10, "Do skarbonki", "skarbonka", "do skarbonki", "Skarbonka!"],
+    [7, "Do słoika", "słoik", "do słoika"],
+    [5, "Dajemy dzieciom", "dzieciom", "dla dzieci", "dziecko zbiera"],
+    [4, "Na tacę", "na tacę", "ofiara", "taca"],
+    [3, "Płacimy w sklepie", "płacimy nimi", "wydajemy w sklepie"],
+    [2, "Wrzucamy do automatu", "automat"],
+    [1, "Gubimy", "gubimy"]
+  ]
+}

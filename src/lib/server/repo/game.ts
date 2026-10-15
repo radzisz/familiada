@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseGameState, type GameState } from "@/lib/game";
+import { initialGameState, parseGameState, type GameState } from "@/lib/game";
 import { boardAnswers } from "@/lib/scoring";
 import type { Board, BoardQuestion, GamePlan, Question } from "@/lib/types";
 import { check } from "../db";
@@ -17,6 +17,15 @@ export async function upsertGameState(db: SupabaseClient, eventId: string, state
     .from("game_state")
     .upsert({ event_id: eventId, state, updated_at: new Date().toISOString() });
   check("upsertGameState", error);
+}
+
+/**
+ * Zeruje grę: zapisuje stan początkowy z numerem wersji wyższym niż obecny,
+ * żeby otwarte tablice i pilot go przyjęły (zwykłe usunięcie wiersza by zignorowały).
+ */
+export async function resetGameState(db: SupabaseClient, eventId: string): Promise<void> {
+  const current = await fetchGameState(db, eventId);
+  await upsertGameState(db, eventId, { ...initialGameState(), rev: current.rev + 1 });
 }
 
 /** Wynik pytania gotowy na tablicę: top 6 grup z punktami. */

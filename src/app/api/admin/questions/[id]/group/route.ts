@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: Params): Promise<NextRespon
   const { id } = await params;
   const body = await parseBody(req, GroupModeSchema);
   if (body instanceof NextResponse) return body;
-  return adminRoute("question.group", async ({ db, event }) => {
+  return adminRoute(req, "question.group", async ({ db, event }) => {
     const question = await fetchQuestion(db, event.id, id);
     if (!question) return jsonError("Nie ma takiego pytania.", 404);
     return body.mode === "ai" ? groupWithAi(db, question) : groupBasic(db, question.id);

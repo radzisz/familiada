@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { FINAL_TARGET, finalTotal, NONE, type GameAction, type GameState, type Person } from "@/lib/game";
 import type { Board, BoardQuestion } from "@/lib/types";
+import { UndoButton } from "./GameView";
+import { LedCounter } from "./LedCounter";
 import type { Sound } from "./sound";
+import { useCountdown } from "./useCountdown";
 
 interface Props {
   state: GameState;
@@ -13,36 +15,16 @@ interface Props {
   sound: Sound;
 }
 
-const TICK_MS = 200;
 const TIMER_IDLE = 20;
-
-/** Sekundy do końca stopera; buzz raz, gdy dojdzie do zera. */
-function useCountdown(endsAt: number | null, sound: Sound): number | null {
-  const [now, setNow] = useState(() => Date.now());
-  const buzzedFor = useRef<number | null>(null);
-  useEffect(() => {
-    if (endsAt === null) return;
-    const timer = window.setInterval(() => setNow(Date.now()), TICK_MS);
-    return () => window.clearInterval(timer);
-  }, [endsAt]);
-  const left = endsAt === null ? null : Math.max(0, Math.ceil((endsAt - now) / 1000));
-  useEffect(() => {
-    if (left === 0 && endsAt !== null && buzzedFor.current !== endsAt) {
-      buzzedFor.current = endsAt;
-      sound.buzz();
-    }
-  }, [left, endsAt, sound]);
-  return left;
-}
 
 export function FinalView({ state, board, hideHost, dispatch, sound }: Props) {
   const finals = board.final.map((q) => q?.answers ?? []);
   const total = finalTotal(state, finals);
-  const left = useCountdown(state.timerEndsAt, sound);
+  const left = useCountdown(state.timerEndsAt, sound.buzz);
   return (
     <section>
       <div className="tb-ftotal">
-        <div><div className="tb-hint">Razem (cel: {FINAL_TARGET})</div><div className={`val${total >= FINAL_TARGET ? " win" : ""}`}>{total}</div></div>
+        <div><div className="tb-hint">Razem (cel: {FINAL_TARGET})</div><LedCounter className={`val${total >= FINAL_TARGET ? " win" : ""}`} value={total} onStep={sound.tick} /></div>
         <div className={`tb-timer${left !== null && left <= 5 ? " low" : ""}`} aria-live="polite">{left ?? TIMER_IDLE}</div>
         {!hideHost && (
           <div className="tb-row">
@@ -63,7 +45,11 @@ export function FinalView({ state, board, hideHost, dispatch, sound }: Props) {
             Pytania finałowe wybierasz w panelu /admin. Przy każdej odpowiedzi zaznacz, którą odpowiedź z tablicy podał
             gracz (albo „brak”). Osoba 2 nie może powtórzyć odpowiedzi osoby 1.
           </p>
-          <div className="tb-row"><button type="button" onClick={() => dispatch({ type: "finalClear" })}>Wyczyść finał</button></div>
+          <div className="tb-row">
+            <UndoButton state={state} dispatch={dispatch} />
+            <button type="button" onClick={() => dispatch({ type: "finalClear" })}>Wyczyść finał</button>
+            <button type="button" onClick={() => dispatch({ type: "setView", view: "game" })}>← Wróć do rund</button>
+          </div>
         </div>
       )}
     </section>

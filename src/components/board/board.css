@@ -104,3 +104,114 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
   .tb-scores { grid-template-columns: 1fr 1fr; }
   .tb-pot { grid-column: 1 / -1; order: -1; }
 }
+
+/* Liczniki punktów: nabijają się, a zmieniona cyfra podskakuje jak na tablicy z żarówkami */
+.tb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tb-digit { display: inline-block; animation: tb-jump .32s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes tb-jump {
+  0% { transform: translateY(-.35em) scale(1.15); opacity: .3; text-shadow: none; }
+  60% { transform: translateY(.05em); opacity: 1; text-shadow: 0 0 18px var(--led); }
+  100% { transform: translateY(0); text-shadow: 0 0 6px color-mix(in srgb, var(--led) 50%, transparent); }
+}
+.tb-team { position: relative; }
+.tb-flash { position: absolute; inset: -2px; border-radius: 14px; pointer-events: none; animation: tb-flash 1.2s ease-out forwards; }
+.tb-team.w .tb-flash { --flash: var(--wife); }
+.tb-team.h .tb-flash { --flash: var(--husband); }
+@keyframes tb-flash {
+  0%, 30%, 60% { box-shadow: 0 0 0 3px var(--flash), 0 0 36px var(--flash); background: color-mix(in srgb, var(--flash) 35%, transparent); }
+  15%, 45% { box-shadow: none; background: transparent; }
+  100% { box-shadow: none; background: transparent; }
+}
+.tb-gain {
+  position: absolute; left: 42%; top: 6px; pointer-events: none; font-family: var(--led-font); color: var(--led);
+  font-size: clamp(26px, 3.4vw, 44px); text-shadow: 0 0 14px var(--led); animation: tb-gain 2.2s ease-out forwards;
+}
+@keyframes tb-gain {
+  0% { opacity: 0; transform: translateY(20px) scale(.6); }
+  15% { opacity: 1; transform: translateY(-10px) scale(1.15); }
+  70% { opacity: 1; transform: translateY(-24px) scale(1); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+/* Odkryta odpowiedź: litery zapalają się po kolei (opóźnienie w stylu inline), potem punkty */
+.tb-lit { display: inline-block; white-space: pre; opacity: 0; animation: tb-light .18s ease-out forwards; }
+@keyframes tb-light {
+  0% { opacity: 0; color: #fff; text-shadow: 0 0 22px #fff; }
+  100% { opacity: 1; text-shadow: 0 0 6px color-mix(in srgb, var(--led) 60%, transparent); }
+}
+.tb-slot.just { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tb-digit, .tb-flash, .tb-gain { animation: none; }
+  .tb-flash, .tb-gain { display: none; }
+  .tb-lit { animation: none; opacity: 1; }
+}
+
+/* Po schowaniu panelu: dyskretny przycisk w rogu (widoczny po najechaniu lub dotknięciu), żeby nie trzeba było klawiatury */
+.tb .tb-showpanel { position: fixed; right: 12px; bottom: 12px; opacity: .15; font-size: 13px; padding: 6px 10px; z-index: 10; transition: opacity .2s; }
+.tb .tb-showpanel:hover, .tb .tb-showpanel:focus-visible { opacity: 1; }
+
+/* Ściąga operatora na ekranie pilota: pytanie i wszystkie odpowiedzi do klikania */
+.tb-key { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.tb-key-q { font-size: clamp(18px, 2.4vw, 26px); font-weight: 700; margin: 0 0 10px; }
+.tb-key ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tb .tb-key button { width: 100%; display: grid; grid-template-columns: 2em 1fr 3em 22px; gap: 8px; align-items: center; text-align: left; font-size: 20px; padding: 10px 14px; }
+.tb-key .a { font-weight: 700; overflow-wrap: anywhere; }
+.tb-key .p { text-align: right; font-family: var(--led-font); color: var(--led); font-size: 26px; }
+.tb-key .s { color: var(--muted); }
+.tb .tb-key button.concealed { opacity: .45; }
+.tb .tb-key button .s { display: inline-flex; align-items: center; justify-content: flex-end; }
+@media (max-width: 720px) { .tb .tb-key button { grid-template-columns: 1.6em 1fr 2.6em 20px; font-size: 18px; } }
+
+/* Panel prowadzącego: trzy osobne sekcje – pula, odpowiedzi, nawigacja. */
+.tb-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tb-sec { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; }
+.tb-sec h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+/* Na tablicy: drużyna z pulą świeci. */
+.tb-team.active { box-shadow: 0 0 0 3px var(--led), 0 0 24px color-mix(in srgb, var(--led) 55%, transparent); }
+
+/* Pilot (telefon operatora): wszystko ciasno, żeby mieściło się na wysokość ekranu bez przewijania. */
+.tb.pilot { padding-top: 8px; padding-bottom: 8px; }
+.tb.pilot .tb-head { margin-bottom: 6px; }
+.tb.pilot .tb-head h1 { font-size: 18px; }
+.tb.pilot .tb-scores { gap: 6px; margin-bottom: 6px; }
+/* Pula: opis i wartość w jednej linii. */
+.tb.pilot .tb-pot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 12px; border-radius: 10px; text-align: left; }
+.tb.pilot .tb-pot .val { font-size: 30px; }
+.tb.pilot .tb-team { padding: 2px 10px; border-radius: 10px; }
+.tb.pilot .tb-team .name { font-size: 14px; }
+.tb.pilot .tb-team .pts { font-size: 30px; }
+.tb.pilot .tb-key { padding: 8px; }
+.tb.pilot .tb-key-q { font-size: 17px; margin-bottom: 6px; }
+.tb.pilot .tb-key ol { gap: 4px; }
+.tb.pilot .tb-key button { padding: 5px 10px; font-size: 16px; }
+.tb.pilot .tb-key .p { font-size: 20px; }
+.tb.pilot .tb-panel { margin-top: 6px; padding: 6px; gap: 6px; }
+.tb.pilot .tb-sections { gap: 6px; }
+.tb.pilot .tb-sec { padding: 4px 8px 8px; }
+.tb.pilot .tb-sec h3 { margin-bottom: 4px; font-size: 11px; }
+.tb.pilot .tb-hint { margin: 0; font-size: 12px; }
+
+/* Delikatne przyciski panelu: lekko zabarwione tło i kolorowa ramka zamiast pełnego koloru. */
+.tb button.soft { --soft: var(--muted); background: color-mix(in srgb, var(--soft) 16%, var(--panel)); border-color: color-mix(in srgb, var(--soft) 60%, transparent); color: var(--text); font-weight: 600; }
+.tb button.soft:hover:not(:disabled) { border-color: var(--soft); background: color-mix(in srgb, var(--soft) 26%, var(--panel)); }
+.tb button.soft.bad { --soft: var(--bad); }
+.tb button.soft.wife { --soft: var(--wife); }
+.tb button.soft.husband { --soft: var(--husband); }
+
+/* W każdej sekcji panelu przyciski rozsunięte do krawędzi (lewo / prawo) – trudniej trafić w zły. */
+.tb-sec .tb-row { justify-content: space-between; }
+
+/* „Dalej →” z opisem kroku pod spodem. */
+.tb button.tb-next { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.tb button.tb-next small { font-size: 11px; font-weight: 400; opacity: .8; }
+
+/* Odliczanie po pokazaniu pytania: duża cyfra na półprzezroczystej nakładce nad polem odpowiedzi. */
+.tb-slots { position: relative; }
+.tb-countdown {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2;
+  background: color-mix(in srgb, var(--board) 78%, transparent); border-radius: 12px;
+  font-family: var(--led-font); color: var(--led); font-size: clamp(90px, 16vw, 220px); line-height: 1;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--led) 70%, transparent);
+}
+/* Animuje się tylko cyfra (nowa co sekundę) – przyciemnienie stoi bez migania. */
+.tb-countdown span { display: inline-block; animation: tb-count .9s ease-out; }
+@keyframes tb-count { 0% { transform: scale(1.35); opacity: 0; } 25% { transform: scale(1); opacity: 1; } }

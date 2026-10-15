@@ -17,7 +17,7 @@
   display: flex;
   justify-content: center;
 }
-.sv-card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 14px; }
+.sv-card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 14px; min-height: calc(100dvh - 40px); }
 .sv-brand {
   margin: 0; font-family: var(--font-serif), Cambria, Georgia, serif; color: var(--sv-gold);
   font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 15px;
@@ -50,5 +50,12 @@
 .sv-btn { min-height: 58px; border-radius: 14px; font-size: 20px; font-weight: 700; border: 2px solid var(--sv-green); }
 .sv-btn.primary { background: var(--sv-gold); border-color: var(--sv-gold); color: #fff; }
 .sv-btn.ghost { background: transparent; color: var(--sv-green); }
+
+
+.sv-footer { margin-top: auto; padding-top: 28px; border-top: 1px solid #cfdcd7; text-align: center; }
+.sv-footer-title { margin: 0 0 12px; color: var(--sv-muted); font-size: 15px; }
+.sv-partners { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: 28px; }
+.sv-partners a { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--sv-green); font-size: 13px; text-decoration: none; }
+.sv-partners img { border-radius: 50%; background: #fff; }
 
 @media (prefers-reduced-motion: reduce) { .sv-progress-bar { transition: none; } }

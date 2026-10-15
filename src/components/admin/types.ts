@@ -7,7 +7,7 @@ export interface OverviewQuestion extends Question {
 }
 
 export interface Overview {
-  event: { id: string; name: string; surveyOpen: boolean };
+  event: { id: string; name: string; surveyOpen: boolean; isTest: boolean };
   counts: { wife: number; husband: number };
   questions: OverviewQuestion[];
   plan: GamePlan;

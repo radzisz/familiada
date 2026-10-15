@@ -1,11 +1,6 @@
-import { PinForm } from "@/components/PinForm";
-import { QrScreen } from "@/components/QrScreen";
-import { isAdmin } from "@/lib/server/auth";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = { title: "Kod QR – Familiada" };
-
-export default async function QrPage() {
-  if (!(await isAdmin())) return <PinForm title="Kod QR" />;
-  return <QrScreen baseUrl={process.env.NEXT_PUBLIC_BASE_URL || null} />;
+/** Bez id rozgrywki nie wiadomo, co pokazać – lista rozgrywek ma linki do tablicy i kodu QR. */
+export default function WithoutEvent() {
+  redirect("/admin");
 }

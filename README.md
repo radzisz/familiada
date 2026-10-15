@@ -2,13 +2,17 @@
 
 Ankieta w telefonie (QR) w ciągu dnia → automatycznie zliczone i pogrupowane odpowiedzi → gra na rzutniku wieczorem. Zero ręcznego liczenia.
 
+**Rozgrywka** to komplet: własne pytania, odpowiedzi z ankiety, wybór pytań do gry i stan tablicy. Rozgrywek może być dowolnie wiele (testowa, prawdziwa, kolejne rekolekcje) i działają niezależnie – każda pod adresem ze swoim id.
+
 | Ścieżka | Kto | Co robi |
 | --- | --- | --- |
-| `/` | uczestnik (z QR) | anonimowa ankieta, jedna na telefon |
-| `/admin` | prowadzący (PIN) | licznik zgłoszeń, pytania, grupowanie (AI lub bez), wynik, wybór pytań do gry, eksport CSV |
-| `/tablica` | prowadzący (PIN), rzutnik | rundy 1–5 (×1 ×1 ×1 ×2 ×3), odkrywanie, X, pule, finał ze stoperem |
-| `/tablica?pilot=1` | prowadzący, telefon | ten sam panel bez tablicy i bez dźwięku – steruje grą na rzutniku |
-| `/qr` | prowadzący (PIN), rzutnik | duży kod QR z linkiem do ankiety |
+| `/admin` | prowadzący (PIN) | lista rozgrywek z linkami, tworzenie nowej (pytania domyślne / skopiowane / bez), zmiana nazwy, oznaczenie „testowa”, usuwanie |
+| `/admin/<id>` | prowadzący (PIN) | panel rozgrywki: licznik zgłoszeń, otwieranie/zamykanie ankiety; zakładka „Pytania i odpowiedzi” (lista pytań, grupowanie AI lub bez, wynik); zakładka „Przygotowanie do gry” (wybór pytań do rund i finału – ręcznie lub automatycznie); w rozgrywce testowej panel „Dane testowe” |
+| `/ankieta/<id>` | uczestnik (z QR) | anonimowa ankieta, jedna na telefon (osobno w każdej rozgrywce) |
+| `/qr/<id>` | prowadzący (PIN), rzutnik | duży kod QR z linkiem do `/ankieta/<id>` |
+| `/tablica/<id>` | prowadzący (PIN), rzutnik | rundy 1–5 (×1 ×1 ×1 ×2 ×3), odkrywanie, X, pule, finał ze stoperem |
+| `/tablica/<id>?pilot=1` | prowadzący, telefon | ten sam panel bez tablicy i bez dźwięku – steruje grą na rzutniku |
+| `/` | – | tylko prośba o zeskanowanie kodu QR |
 
 Stack: Next.js 15 (App Router, TypeScript), Supabase (Postgres), Anthropic API (Claude) do grupowania, zwykły CSS.
 
@@ -33,15 +37,20 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 **Chmura (produkcja):** w Supabase → SQL Editor uruchom po kolei:
 
 1. `supabase/migrations/0001_schema.sql` – tabele, RLS, funkcje,
-2. `supabase/migrations/0002_seed.sql` – aktywne wydarzenie i 26 pytań.
+2. `supabase/migrations/0002_seed.sql` – pierwsza rozgrywka z 26 pytaniami (opcjonalnie – rozgrywki tworzysz też w `/admin`),
+3. `supabase/migrations/0003_rozgrywki.sql` – oznaczenie „testowa”, licznik rozgrywek, usunięcie „aktywnego wydarzenia”. **Uruchom też, jeśli baza ma już 0001–0002.**
 
 Albo zamiast kroku 2: `npm run seed` (używa `.env.local`).
 
 **Lokalnie (Docker):** `npx supabase start` – migracje i seed wchodzą same; adres i klucze wypisze komenda (porty 564xx, patrz `supabase/config.toml`). `npx supabase db reset` czyści bazę.
 
-**Kolejna edycja rekolekcji:** `npm run seed -- --new "Rekolekcje wiosna 2027"` – tworzy nowe aktywne wydarzenie z 26 pytaniami, stare dane zostają w bazie.
+**Rozgrywka testowa:** w `/admin` utwórz rozgrywkę z zaznaczonym „testowa”. W jej panelu „Dane testowe” dodaje 10–80 losowych ankiet (pule z literówkami i synonimami w `src/lib/data/test-answers.json`) i jednym przyciskiem czyści odpowiedzi, grupy i stan gry. W rozgrywce nietestowej te przyciski są zablokowane, więc prawdziwe dane się nie pomieszają.
 
-Bezpieczeństwo: RLS jest włączone na wszystkich tabelach, bez polityk dla `anon`. Cały dostęp idzie przez serwer kluczem service role po sprawdzeniu PIN-u (cookie httpOnly z HMAC, ważne 24 h). Ankieta zapisuje się jedną transakcją (`submit_survey`), unikalny indeks `(event_id, device_id)` blokuje drugą ankietę z tego samego telefonu.
+Z konsoli (dodatkowo sprawdza drogę HTTP `/api/submit`): `npm run seed:answers -- --event <id> [--count 80] [--url http://localhost:3456]`; dla adresu innego niż lokalny trzeba dodać `--yes`; `--clear` usuwa tylko ankiety wysłane tym skryptem.
+
+**Kolejne rekolekcje:** w `/admin` „Nowa rozgrywka” → „skopiuj z: …” przenosi pytania (bez odpowiedzi). Z konsoli: `npm run seed -- --new "Rekolekcje wiosna 2027" [--test]`.
+
+Bezpieczeństwo: RLS jest włączone na wszystkich tabelach, bez polityk dla `anon`. Cały dostęp idzie przez serwer kluczem service role po sprawdzeniu PIN-u (cookie httpOnly z HMAC, ważne 24 h). Ankieta zapisuje się jedną transakcją (`submit_survey`), unikalny indeks `(event_id, device_id)` blokuje drugą ankietę z tego samego telefonu w tej samej rozgrywce; odpowiedzi na pytania z innej rozgrywki są odrzucane. Id rozgrywki to losowy UUID, więc linku do ankiety nie da się zgadnąć.
 
 ## 3. Uruchomienie lokalne
 
@@ -56,18 +65,18 @@ npm run check        # typecheck + eslint (0 ostrzeżeń) + testy jednostkowe
 1. Wypchnij repozytorium na GitHub i zaimportuj je w Vercel (framework wykryje się sam).
 2. W Vercel → Settings → Environment Variables dodaj zmienne z punktu 1.
 3. Deploy. Grupowanie AI ma `maxDuration = 120 s` – na planie Hobby limit to 60 s, co przy ~80 odpowiedziach wystarcza.
-4. Otwórz `https://twoja-aplikacja.vercel.app/qr`, zaloguj się PIN-em i sprawdź telefonem, czy kod otwiera ankietę.
+4. Otwórz `https://twoja-aplikacja.vercel.app/admin`, zaloguj się PIN-em, przy rozgrywce kliknij „Kod QR” i sprawdź telefonem, czy kod otwiera ankietę.
 
 ## 5. Test całości w 5 minut
 
-1. `/admin` bez PIN-u pokazuje tylko pole PIN; zaloguj się.
-2. Na telefonie zeskanuj kod z `/qr` → „Żona” → widzisz pytania dla żon i wspólne → wpisz np. „Ciuchy” w pytaniu 1 → Wyślij → „Dziękujemy!”. Odśwież → „Już odpowiedziałeś”.
-3. W trybie incognito (lub na drugim telefonie) → „Mąż” → wpisz „ubrania!” i „Bluzki” w pytaniach. Licznik w `/admin` rośnie sam.
-4. W `/admin` kliknij pytanie → odpowiedzi pogrupują się po pisowni. „Pogrupuj z AI” (dwa kliknięcia) połączy je w „Ubrania”. Przenieś odpowiedź listą „przenieś do…” lub przeciągnij ją, zmień etykietę, ukryj grupę.
-5. W „Wybór pytań do gry” przypisz pytania do rund 1–5 i finału.
-6. `/tablica`: klawisze `1`–`6` odkrywają, `X` błąd, „Pula dla Żon/Mężów”, `H` chowa panel, „Pełny ekran”. Odśwież stronę – wynik zostaje. Zakładka „Finał”: wybór odpowiedzi (osoba 2 nie może powtórzyć), stoper 20/25 s, cel 200.
-7. „Eksport CSV” w `/admin` – kopia zapasowa wyników na wypadek braku internetu wieczorem.
-8. „Zamknij ankietę” (dwa kliknięcia) → `/` pokazuje „Ankieta zamknięta”.
+0. Szybciej: utwórz rozgrywkę testową i zamiast kroków 2–3 kliknij „Dodaj testowe ankiety”; po teście „Wyczyść odpowiedzi…” albo usuń całą rozgrywkę.
+1. `/admin` bez PIN-u pokazuje tylko pole PIN; zaloguj się i otwórz panel rozgrywki.
+2. Na telefonie zeskanuj „Kod QR” rozgrywki → „Żona” → widzisz pytania dla żon i wspólne → wpisz np. „Ciuchy” w pytaniu 1 → Wyślij → „Dziękujemy!”. Odśwież → „Już odpowiedziałeś”.
+3. W trybie incognito (lub na drugim telefonie) → „Mąż” → wpisz „ubrania!” i „Bluzki” w pytaniach. Licznik w panelu rośnie sam.
+4. W panelu kliknij pytanie → odpowiedzi pogrupują się po pisowni. „Pogrupuj z AI” (dwa kliknięcia) połączy je w „Ubrania”. Przenieś odpowiedź listą „przenieś do…” lub przeciągnij ją, zmień etykietę, ukryj grupę.
+5. Zakładka „Przygotowanie do gry”: „Uzupełnij puste automatycznie” (albo „Wybierz wszystko od nowa”) dobiera pytania – do rund z pełną tablicą (runda 2 dla mężów, runda 3 dla żon), do finału wspólne z wyraźnym liderem. Pod każdym wyborem widać podgląd tablicy i ostrzeżenie o niepogrupowanych odpowiedziach; każde miejsce można zmienić ręcznie.
+6. „Tablica” z panelu (`/tablica/<id>`): klawisze `1`–`6` odkrywają, `X` błąd, „Pula dla Żon/Mężów”, `H` chowa panel, „Pełny ekran”. Odśwież stronę – wynik zostaje. Zakładka „Finał”: wybór odpowiedzi (osoba 2 nie może powtórzyć), stoper 20/25 s, cel 200.
+7. „Zamknij ankietę” (dwa kliknięcia) → link ankiety pokazuje „Ankieta zamknięta”.
 
 ## Jak liczone są punkty
 
@@ -75,7 +84,7 @@ Punkty odpowiedzi = `round(liczba osób w grupie / liczba osób, które odpowied
 
 ## Struktura
 
-- `src/lib/` – czysta logika z testami: normalizacja, punktacja, grupowanie, reducer gry, token sesji, CSV.
+- `src/lib/` – czysta logika z testami: normalizacja, punktacja, grupowanie, automatyczny wybór pytań, odpowiedzi testowe, reducer gry, token sesji. `src/lib/data/` – 26 domyślnych pytań i pule odpowiedzi testowych.
 - `src/lib/server/` – dostęp do bazy (`repo/`), auth, wywołanie Claude (`ai.ts`). Funkcje zapisujące mają w nazwie `insert/update/delete/apply/upsert`.
 - `src/app/api/` – Route Handlers.
 - `src/components/` – ankieta, panel, tablica, QR.

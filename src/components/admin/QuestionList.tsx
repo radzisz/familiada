@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { postJson } from "@/lib/client/api";
+import { eventUrl } from "@/lib/client/eventUrl";
 import type { Audience } from "@/lib/types";
 import { AudienceSelect } from "./AudienceSelect";
 import { QuestionRow } from "./QuestionRow";
@@ -9,20 +10,13 @@ import type { Overview, OverviewQuestion } from "./types";
 
 interface Props {
   overview: Overview;
-  selected: string | null;
-  onSelect: (id: string) => void;
+  /** Akcje nad listą (otwieranie / zamykanie ankiety). */
+  toolbar: React.ReactNode;
   onChange: () => Promise<void>;
 }
 
-/** Gdzie pytanie jest użyte w grze, np. „Runda 2” albo „Finał 3”. */
-function planLabel(overview: Overview, id: string): string | null {
-  const r = overview.plan.rounds.indexOf(id);
-  if (r >= 0) return `Runda ${r + 1}`;
-  const f = overview.plan.final.indexOf(id);
-  return f >= 0 ? `Finał ${f + 1}` : null;
-}
-
-export function QuestionList({ overview, selected, onSelect, onChange }: Props) {
+/** Zakładka „Pytania”: definiowanie pytań ankiety (bez odpowiedzi i grupowania). */
+export function QuestionList({ overview, toolbar, onChange }: Props) {
   const [error, setError] = useState("");
   const qs = overview.questions;
 
@@ -37,25 +31,27 @@ export function QuestionList({ overview, selected, onSelect, onChange }: Props) 
     const target = index + delta;
     if (target < 0 || target >= ids.length) return;
     [ids[index], ids[target]] = [ids[target]!, ids[index]!];
-    void run(postJson("/api/admin/questions", { ids }, "PUT"));
+    void run(postJson(eventUrl("/api/admin/questions", overview.event.id), { ids }, "PUT"));
   };
   const patch = (q: OverviewQuestion, body: Partial<Pick<OverviewQuestion, "text" | "audience" | "hidden">>) =>
-    run(postJson(`/api/admin/questions/${q.id}`, body, "PATCH"));
+    run(postJson(eventUrl(`/api/admin/questions/${q.id}`, overview.event.id), body, "PATCH"));
 
   return (
-    <section className="ad-panel" aria-label="Pytania">
-      <h2>Pytania ({qs.filter((q) => !q.hidden).length})</h2>
+    <section className="ad-panel ad-questions" aria-label="Pytania">
+      <div className="ad-toolbar">
+        <h2>Pytania w ankiecie ({qs.filter((q) => !q.hidden).length})</h2>
+        <div className="ad-row">{toolbar}</div>
+      </div>
       {error && <p className="ad-error" role="alert">{error}</p>}
       <ol className="ad-qlist">
         {qs.map((q, i) => (
           <QuestionRow
             key={q.id} q={q} index={i} last={i === qs.length - 1}
-            selected={q.id === selected} plan={planLabel(overview, q.id)}
-            onSelect={() => onSelect(q.id)} onMove={(d) => move(i, d)} onPatch={(b) => patch(q, b)}
+            onMove={(d) => move(i, d)} onPatch={(b) => patch(q, b)}
           />
         ))}
       </ol>
-      <AddQuestion onAdd={(text, audience) => run(postJson("/api/admin/questions", { text, audience }))} />
+      <AddQuestion onAdd={(text, audience) => run(postJson(eventUrl("/api/admin/questions", overview.event.id), { text, audience }))} />
     </section>
   );
 }

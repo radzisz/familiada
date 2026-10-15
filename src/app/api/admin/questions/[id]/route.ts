@@ -11,9 +11,9 @@ type Params = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 
 /** Szczegóły grupowania pytania. */
-export async function GET(_req: Request, { params }: Params): Promise<NextResponse> {
+export async function GET(req: Request, { params }: Params): Promise<NextResponse> {
   const { id } = await params;
-  return adminRoute("question.get", async ({ db, event }) => {
+  return adminRoute(req, "question.get", async ({ db, event }) => {
     const question = await fetchQuestion(db, event.id, id);
     if (!question) return jsonError("Nie ma takiego pytania.", 404);
     const [answers, groups] = await Promise.all([fetchAnswers(db, id), fetchGroups(db, id)]);
@@ -26,7 +26,7 @@ export async function PATCH(req: Request, { params }: Params): Promise<NextRespo
   const { id } = await params;
   const body = await parseBody(req, QuestionPatchSchema);
   if (body instanceof NextResponse) return body;
-  return adminRoute("question.patch", async ({ db, event }) => {
+  return adminRoute(req, "question.patch", async ({ db, event }) => {
     await updateQuestion(db, event.id, id, body);
     return NextResponse.json({ ok: true });
   });

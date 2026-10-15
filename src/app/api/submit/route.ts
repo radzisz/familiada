@@ -1,23 +1,10 @@
 import { NextResponse } from "next/server";
 import { assert } from "@/lib/assert";
-import { cleanRawAnswer, normalizeAnswer } from "@/lib/normalize";
 import { SubmitSchema } from "@/lib/schemas";
-import { MAX_ANSWER_LENGTH } from "@/lib/types";
+import { prepareAnswers } from "@/lib/submission";
 import { serviceClient } from "@/lib/server/db";
 import { jsonError, parseBody, serverError } from "@/lib/server/http";
 import { insertSubmission } from "@/lib/server/repo/events";
-
-type SubmitAnswer = { questionId: string; text: string };
-
-function prepareAnswers(answers: SubmitAnswer[]) {
-  const seen = new Set<string>();
-  return answers.flatMap((a) => {
-    const raw = cleanRawAnswer(a.text, MAX_ANSWER_LENGTH);
-    if (raw === null || seen.has(a.questionId)) return [];
-    seen.add(a.questionId);
-    return [{ question_id: a.questionId, raw, normalized: normalizeAnswer(raw) }];
-  });
-}
 
 const MESSAGES = {
   duplicate: ["Już odpowiedziałeś, dziękujemy!", 409],

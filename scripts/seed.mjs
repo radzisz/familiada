@@ -1,11 +1,13 @@
-// Seed: tworzy aktywne wydarzenie z 26 pytaniami.
+// Seed: tworzy rozgrywkę z 26 domyślnymi pytaniami.
 // Użycie:
-//   npm run seed                      – tylko jeśli nie ma aktywnego wydarzenia
-//   npm run seed -- --new "Nazwa"     – nowa edycja: stare wydarzenie zostaje w bazie, ale przestaje być aktywne
+//   npm run seed                              – tylko jeśli w bazie nie ma jeszcze żadnej rozgrywki
+//   npm run seed -- --new "Nazwa"             – kolejna rozgrywka (poprzednie zostają w bazie)
+//   npm run seed -- --new "Próba" --test      – rozgrywka testowa
+// To samo (i więcej) robi formularz „Nowa rozgrywka” w /admin.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
-const QUESTIONS = JSON.parse(readFileSync(new URL("./questions.json", import.meta.url), "utf8"));
+const QUESTIONS = JSON.parse(readFileSync(new URL("../src/lib/data/questions.json", import.meta.url), "utf8"));
 
 function requireEnv(...names) {
   const value = names.map((n) => process.env[n]).find((v) => v);
@@ -15,24 +17,20 @@ function requireEnv(...names) {
 
 function parseArgs(argv) {
   const i = argv.indexOf("--new");
-  if (i === -1) return { forceNew: false, name: "Rekolekcje dla małżeństw" };
-  return { forceNew: true, name: argv[i + 1] || `Rekolekcje ${new Date().toISOString().slice(0, 10)}` };
+  const isTest = argv.includes("--test");
+  if (i === -1) return { forceNew: false, isTest, name: "Rekolekcje dla małżeństw" };
+  return { forceNew: true, isTest, name: argv[i + 1] || `Rekolekcje ${new Date().toISOString().slice(0, 10)}` };
 }
 
-async function findActiveEvent(db) {
-  const { data, error } = await db.from("events").select("id, name").eq("is_active", true).maybeSingle();
-  if (error) throw new Error(`Odczyt wydarzeń: ${error.message}`);
-  return data;
+async function countEvents(db) {
+  const { count, error } = await db.from("events").select("id", { count: "exact", head: true });
+  if (error) throw new Error(`Odczyt rozgrywek: ${error.message}`);
+  return count ?? 0;
 }
 
-async function deactivateEvent(db, id) {
-  const { error } = await db.from("events").update({ is_active: false }).eq("id", id);
-  if (error) throw new Error(`Dezaktywacja wydarzenia: ${error.message}`);
-}
-
-async function insertEventWithQuestions(db, name) {
-  const { data: event, error } = await db.from("events").insert({ name, is_active: true }).select("id").single();
-  if (error) throw new Error(`Tworzenie wydarzenia: ${error.message}`);
+async function insertEventWithQuestions(db, name, isTest) {
+  const { data: event, error } = await db.from("events").insert({ name, is_test: isTest }).select("id").single();
+  if (error) throw new Error(`Tworzenie rozgrywki: ${error.message}`);
   const rows = QUESTIONS.map((q, i) => ({ event_id: event.id, position: i + 1, audience: q.audience, text: q.text }));
   const { error: qErr } = await db.from("questions").insert(rows);
   if (qErr) throw new Error(`Wstawianie pytań: ${qErr.message}`);
@@ -46,15 +44,15 @@ async function main() {
     requireEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY"),
     { auth: { persistSession: false } },
   );
-  const { forceNew, name } = parseArgs(process.argv.slice(2));
-  const active = await findActiveEvent(db);
-  if (active && !forceNew) {
-    console.log(`Aktywne wydarzenie już istnieje: „${active.name}” (${active.id}). Nic nie zmieniam.`);
+  const { forceNew, isTest, name } = parseArgs(process.argv.slice(2));
+  const existing = await countEvents(db);
+  if (existing > 0 && !forceNew) {
+    console.log(`W bazie jest już ${existing} rozgrywek – nic nie zmieniam. Nową dodasz: npm run seed -- --new "Nazwa".`);
     return;
   }
-  if (active) await deactivateEvent(db, active.id);
-  const id = await insertEventWithQuestions(db, name);
-  console.log(`Utworzono wydarzenie „${name}” (${id}) z ${QUESTIONS.length} pytaniami.`);
+  const id = await insertEventWithQuestions(db, name, isTest);
+  console.log(`Utworzono rozgrywkę „${name}”${isTest ? " (testową)" : ""} z ${QUESTIONS.length} pytaniami.`);
+  console.log(`Panel: /admin/${id}   Ankieta: /ankieta/${id}`);
 }
 
 main().catch((err) => {

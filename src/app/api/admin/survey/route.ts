@@ -7,7 +7,7 @@ import { updateSurveyOpen } from "@/lib/server/repo/events";
 export async function POST(req: Request): Promise<NextResponse> {
   const body = await parseBody(req, SurveyOpenSchema);
   if (body instanceof NextResponse) return body;
-  return adminRoute("survey", async ({ db, event }) => {
+  return adminRoute(req, "survey", async ({ db, event }) => {
     await updateSurveyOpen(db, event.id, body.open);
     return NextResponse.json({ ok: true });
   });

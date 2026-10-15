@@ -8,6 +8,7 @@ export interface EventRow {
   id: string;
   name: string;
   survey_open: boolean;
+  is_test: boolean;
   game_plan: GamePlan;
 }
 
@@ -20,16 +21,17 @@ function sanitizePlan(raw: unknown): GamePlan {
   return { rounds: pick(r.rounds, ROUND_COUNT), final: pick(r.final, FINAL_COUNT) };
 }
 
-/** Odczyt aktywnego wydarzenia (null, jeśli seed nie został uruchomiony). */
-export async function fetchActiveEvent(db: SupabaseClient): Promise<EventRow | null> {
-  const { data, error } = await db
-    .from("events")
-    .select("id, name, survey_open, game_plan")
-    .eq("is_active", true)
-    .maybeSingle();
-  check("fetchActiveEvent", error);
-  if (!data) return null;
-  return { ...(data as EventRow), game_plan: sanitizePlan((data as EventRow).game_plan) };
+const EVENT_COLUMNS = "id, name, survey_open, is_test, game_plan";
+
+function toEventRow(data: unknown): EventRow {
+  const row = data as EventRow;
+  return { ...row, game_plan: sanitizePlan(row.game_plan) };
+}
+
+export async function fetchEvent(db: SupabaseClient, eventId: string): Promise<EventRow | null> {
+  const { data, error } = await db.from("events").select(EVENT_COLUMNS).eq("id", eventId).maybeSingle();
+  check("fetchEvent", error);
+  return data ? toEventRow(data) : null;
 }
 
 export async function updateSurveyOpen(db: SupabaseClient, eventId: string, open: boolean): Promise<void> {
