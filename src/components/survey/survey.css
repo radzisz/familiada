@@ -1,0 +1,54 @@
+/* Ankieta: mobile first, paleta rekolekcji (zieleń, złoto, jasne tło) */
+.sv {
+  --sv-green: #1F4A42;
+  --sv-green-2: #2c6157;
+  --sv-gold: #A97A3E;
+  --sv-bg: #EEF3F1;
+  --sv-ink: #14231f;
+  --sv-muted: #4d5f5a;
+  --sv-error: #a3261b;
+  min-height: 100dvh;
+  background: var(--sv-bg);
+  color: var(--sv-ink);
+  font-family: var(--font-sans), Calibri, "Segoe UI", Arial, sans-serif;
+  font-size: 19px;
+  line-height: 1.4;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
+  display: flex;
+  justify-content: center;
+}
+.sv-card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 14px; }
+.sv-brand {
+  margin: 0; font-family: var(--font-serif), Cambria, Georgia, serif; color: var(--sv-gold);
+  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 15px;
+}
+.sv-title { margin: 0; font-family: var(--font-serif), Cambria, Georgia, serif; color: var(--sv-green); font-size: 32px; line-height: 1.15; }
+.sv-text { margin: 0; color: var(--sv-muted); }
+.sv-error { margin: 0; color: var(--sv-error); font-weight: 700; }
+
+.sv-roles { display: grid; gap: 14px; margin-top: 8px; }
+.sv-role {
+  min-height: 96px; border-radius: 18px; border: 3px solid var(--sv-green); background: var(--sv-green); color: #fff;
+  font-family: var(--font-serif), Cambria, Georgia, serif; font-size: 34px; font-weight: 700;
+}
+.sv-role:last-child { background: #fff; color: var(--sv-green); }
+.sv-role:focus-visible, .sv-btn:focus-visible, .sv-input:focus-visible { outline: 3px solid var(--sv-gold); outline-offset: 3px; }
+
+.sv-q { display: flex; flex-direction: column; gap: 12px; }
+.sv-progress { height: 10px; background: #d5e0dc; border-radius: 999px; overflow: hidden; }
+.sv-progress-bar { height: 100%; background: var(--sv-gold); border-radius: 999px; transition: width .25s ease; }
+.sv-step { margin: 0; color: var(--sv-muted); font-size: 15px; }
+.sv-question { font-family: var(--font-serif), Cambria, Georgia, serif; font-size: 27px; font-weight: 700; color: var(--sv-green); line-height: 1.2; }
+.sv-input {
+  width: 100%; min-height: 60px; border-radius: 14px; border: 2px solid var(--sv-green-2); background: #fff;
+  padding: 12px 16px; font-size: 22px; color: var(--sv-ink);
+}
+.sv-input::placeholder { color: #8a9a95; }
+.sv-hint { margin: 0; color: var(--sv-muted); font-size: 15px; }
+
+.sv-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; margin-top: 6px; }
+.sv-btn { min-height: 58px; border-radius: 14px; font-size: 20px; font-weight: 700; border: 2px solid var(--sv-green); }
+.sv-btn.primary { background: var(--sv-gold); border-color: var(--sv-gold); color: #fff; }
+.sv-btn.ghost { background: transparent; color: var(--sv-green); }
+
+@media (prefers-reduced-motion: reduce) { .sv-progress-bar { transition: none; } }

@@ -1,0 +1,458 @@
+<title>Tablica Familiady</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Rubik:wght@400;600;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* Layout: a TV-style dot-matrix board on top, host controls below; one deliberate dark world (projector) */
+:root {
+  --bg: #0b0f1c;          /* studio dark */
+  --board: #05070d;       /* board glass */
+  --led: #ffb21a;         /* amber LED */
+  --led-dim: #3a2a08;     /* unlit LED */
+  --wife: #e0527a;        /* team Żony */
+  --husband: #3f8ef0;     /* team Mężowie */
+  --panel: #151b2e;
+  --line: #27304d;
+  --text: #eef1f8;
+  --muted: #8f99b8;
+  --bad: #ff3b30;
+  --font-led: "VT323", "Courier New", monospace;
+  --font-ui: "Rubik", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+button:hover { border-color: var(--led); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+button.primary { background: var(--led); color: #1a1100; border-color: var(--led); font-weight: 600; }
+button.wife { background: var(--wife); border-color: var(--wife); color: #fff; font-weight: 600; }
+button.husband { background: var(--husband); border-color: var(--husband); color: #fff; font-weight: 600; }
+button.bad { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 800; }
+input, select, textarea { background: #0e1323; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+
+header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+header h1 { margin: 0; font-family: var(--font-led); color: var(--led); font-size: 34px; letter-spacing: 2px; font-weight: 400; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav button[aria-pressed="true"] { border-color: var(--led); color: var(--led); }
+
+.wrap { max-width: 1200px; margin: 0 auto; }
+.view[hidden] { display: none !important; }
+
+/* Board */
+.scores { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; margin-bottom: 10px; }
+.team { border-radius: 14px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.team.w { background: color-mix(in srgb, var(--wife) 22%, transparent); border: 2px solid var(--wife); }
+.team.h { background: color-mix(in srgb, var(--husband) 22%, transparent); border: 2px solid var(--husband); }
+.team .name { font-weight: 800; font-size: clamp(16px, 2.2vw, 26px); }
+.team .pts { font-family: var(--font-led); font-size: clamp(34px, 5vw, 60px); color: var(--led); line-height: 1; }
+.pot { background: var(--board); border: 2px solid var(--line); border-radius: 14px; padding: 4px 18px; text-align: center; }
+.pot .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+.pot .val { font-family: var(--font-led); font-size: clamp(34px, 5vw, 60px); color: var(--led); line-height: 1; }
+
+.board { position: relative; background: var(--board); border: 3px solid #1d2440; border-radius: 18px; padding: clamp(10px, 2vw, 24px);
+  background-image: radial-gradient(var(--led-dim) 1px, transparent 1.5px); background-size: 9px 9px; }
+.qtext { font-family: var(--font-led); color: var(--led); font-size: clamp(24px, 3.4vw, 46px); text-align: center; line-height: 1.05; margin: 0 0 14px; text-wrap: balance; }
+.round { text-align: center; color: var(--muted); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.slots { display: grid; gap: 8px; }
+.slot { display: grid; grid-template-columns: 2.2em 1fr 3.2em; align-items: center; gap: 10px; font-family: var(--font-led);
+  font-size: clamp(24px, 3.4vw, 46px); color: var(--led); border: 2px solid #1d2440; border-radius: 10px; padding: 2px 14px; background: rgba(5,7,13,.85);
+  cursor: pointer; min-height: 1.5em; text-align: left; width: 100%; }
+.slot .ans { overflow-wrap: anywhere; text-transform: uppercase; }
+.slot .p { text-align: right; }
+.slot.hidden .ans { color: var(--led-dim); letter-spacing: 4px; }
+.slot.hidden .p { color: var(--led-dim); }
+.slot.just { animation: flip .5s ease; }
+@keyframes flip { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.strikes { display: flex; justify-content: center; gap: 14px; min-height: 64px; margin-top: 12px; }
+.strikes span { font-family: var(--font-led); color: var(--bad); font-size: 70px; line-height: .9; text-shadow: 0 0 12px rgba(255,59,48,.6); }
+.bigx { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font-family: var(--font-led); font-size: min(40vw, 380px); color: var(--bad); text-shadow: 0 0 40px rgba(255,59,48,.8); opacity: 0; }
+.bigx.show { animation: pop 1s ease; }
+@keyframes pop { 0% { opacity: 0; transform: scale(.4); } 20% { opacity: 1; transform: scale(1.05); } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .slot.just, .bigx.show { animation: none; } .bigx.show { opacity: 1; } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.panel[hidden] { display: none; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row label { color: var(--muted); font-size: 13px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+.hint kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-family: var(--font-ui); }
+
+/* QR */
+.qrwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.qrbox { background: #fff; border-radius: 18px; padding: 18px; justify-self: center; max-width: 100%; }
+.qrbox img, .qrbox canvas { display: block; width: min(60vh, 420px) !important; height: auto !important; max-width: 100%; }
+.qrtext h2 { font-family: var(--font-led); color: var(--led); font-size: clamp(36px, 5vw, 64px); font-weight: 400; margin: 0 0 8px; line-height: 1; }
+.qrtext p { font-size: clamp(16px, 2vw, 22px); margin: 0 0 10px; }
+.qrtext .url { font-family: var(--font-led); font-size: 26px; color: var(--led); overflow-wrap: anywhere; }
+
+/* Final */
+.final { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.fcol { background: var(--board); border: 2px solid #1d2440; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fcol h3 { margin: 0 0 4px; font-family: var(--font-led); color: var(--led); font-size: 30px; font-weight: 400; }
+.frow { display: grid; grid-template-columns: minmax(0, 1fr) 4.5em; gap: 6px; }
+.frow select { width: 100%; }
+.frow .fp { font-family: var(--font-led); color: var(--led); font-size: 30px; text-align: right; }
+.ftotal { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ftotal .val { font-family: var(--font-led); color: var(--led); font-size: clamp(46px, 7vw, 90px); line-height: 1; }
+.timer { font-family: var(--font-led); color: var(--led); font-size: clamp(46px, 7vw, 90px); line-height: 1; min-width: 2.2em; text-align: center; }
+.timer.low { color: var(--bad); }
+.fq { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+.win { color: #4cd964; }
+
+/* Questions editor */
+textarea { width: 100%; min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+.qlist { display: grid; gap: 6px; }
+.qitem { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; background: #0e1323; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.qitem .t { min-width: 0; }
+.qitem .a { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.badge { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #1a1100; background: var(--led); border-radius: 999px; padding: 2px 8px; }
+.used { opacity: .5; }
+
+@media (max-width: 720px) {
+  .qrwrap, .final { grid-template-columns: 1fr; }
+  .scores { grid-template-columns: 1fr 1fr; }
+  .pot { grid-column: 1 / -1; order: -1; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>FAMILIADA MAŁŻEŃSKA</h1>
+    <nav aria-label="Widoki">
+      <button data-view="qr" aria-pressed="false">Kod QR</button>
+      <button data-view="game" aria-pressed="true">Gra</button>
+      <button data-view="final" aria-pressed="false">Finał</button>
+      <button data-view="questions" aria-pressed="false">Pytania</button>
+      <button id="fsBtn" title="Pełny ekran">Pełny ekran</button>
+    </nav>
+  </header>
+
+  <!-- QR -->
+  <section class="view" id="view-qr" hidden>
+    <div class="qrwrap">
+      <div class="qrbox" id="qrbox" aria-label="Kod QR do ankiety"></div>
+      <div class="qrtext">
+        <h2>Zeskanuj i zagraj!</h2>
+        <p>Wybierz „Żona” albo „Mąż” i odpowiedz krótko na kilka pytań. Ankieta jest anonimowa.</p>
+        <p>Wyniki zobaczymy wieczorem na Familiadzie.</p>
+        <div class="url" id="qrUrl"></div>
+      </div>
+    </div>
+    <div class="panel" data-host>
+      <div class="row">
+        <label for="formUrl">Link do formularza</label>
+        <input id="formUrl" type="url" placeholder="https://forms.gle/…" style="flex:1; min-width: 200px">
+        <button class="primary" id="qrMake">Pokaż kod QR</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="view" id="view-game">
+    <div class="scores">
+      <div class="team w"><span class="name">ŻONY</span><span class="pts" id="scoreW">0</span></div>
+      <div class="pot"><div class="lbl" id="potLbl">Pula ×1</div><div class="val" id="pot">0</div></div>
+      <div class="team h"><span class="name">MĘŻOWIE</span><span class="pts" id="scoreH">0</span></div>
+    </div>
+    <div class="board" id="board">
+      <div class="round" id="roundLbl">Runda 1</div>
+      <p class="qtext" id="qtext">Wybierz pytanie w panelu poniżej</p>
+      <div class="slots" id="slots"></div>
+      <div class="strikes" id="strikes" aria-live="polite"></div>
+      <div class="bigx" id="bigx" aria-hidden="true">X</div>
+    </div>
+    <div class="panel" data-host>
+      <div class="row">
+        <label for="roundSel">Runda</label>
+        <select id="roundSel">
+          <option value="1">1 (×1)</option><option value="2">2 (×1)</option><option value="3">3 (×1)</option>
+          <option value="4">4 (×2)</option><option value="5">5 (×3)</option>
+        </select>
+        <label for="qSel">Pytanie</label>
+        <select id="qSel" style="flex:1; min-width: 200px"></select>
+      </div>
+      <div class="row">
+        <button class="bad" id="xBtn">X (błąd)</button>
+        <button id="revealAll">Odkryj resztę</button>
+        <button class="wife" id="giveW">Pula dla Żon</button>
+        <button class="husband" id="giveH">Pula dla Mężów</button>
+        <button id="nextQ">Następne pytanie →</button>
+      </div>
+      <div class="row">
+        <button id="resetScores">Wyzeruj wynik</button>
+        <button id="hidePanel">Ukryj panel</button>
+        <p class="hint">Skróty: <kbd>1</kbd>–<kbd>6</kbd> odkrywa odpowiedź, <kbd>X</kbd> błąd, <kbd>H</kbd> ukryj lub pokaż panel. Odpowiedź możesz też kliknąć na tablicy.</p>
+      </div>
+      <p class="hint" id="resetConfirm" hidden>Kliknij jeszcze raz „Wyzeruj wynik”, aby potwierdzić.</p>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="view" id="view-final" hidden>
+    <div class="ftotal">
+      <div><div class="hint">Razem (cel: 200)</div><div class="val" id="fTotal">0</div></div>
+      <div class="timer" id="timer" aria-live="polite">20</div>
+      <div class="row">
+        <button class="primary" id="t20">Start 20 s</button>
+        <button class="primary" id="t25">Start 25 s</button>
+        <button id="tStop">Stop</button>
+      </div>
+    </div>
+    <div class="final" style="margin-top:12px">
+      <div class="fcol"><h3>Osoba 1</h3><div id="fcol1"></div></div>
+      <div class="fcol"><h3>Osoba 2</h3><div id="fcol2"></div></div>
+    </div>
+    <div class="panel" data-host>
+      <p class="hint">Wybierz 5 pytań finałowych. Przy każdej odpowiedzi zaznacz, którą odpowiedź z tablicy podał gracz (albo „brak”). Osoba 2 nie może powtórzyć odpowiedzi osoby 1.</p>
+      <div class="row" id="fPick"></div>
+      <div class="row"><button id="fReset">Wyczyść finał</button></div>
+    </div>
+  </section>
+
+  <!-- QUESTIONS -->
+  <section class="view" id="view-questions" hidden>
+    <div class="panel">
+      <p class="hint">Wklej tu wiersze z zakładki „Do tablicy” w arkuszu z odpowiedziami (zaznacz komórki, Ctrl+C, a tu Ctrl+V). Każdy wiersz: pytanie, potem pary odpowiedź i punkty.</p>
+      <label for="pasteBox" class="hint">Wyniki z arkusza</label>
+      <textarea id="pasteBox" placeholder="Na co mąż wydaje pieniądze bez sensu?	narzędzia	33	elektronika	27	…"></textarea>
+      <div class="row">
+        <button class="primary" id="loadPaste">Wczytaj pytania</button>
+        <button id="loadSample">Wczytaj przykładowe pytania</button>
+        <span class="hint" id="loadMsg" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="qlist" id="qlist" style="margin-top:12px"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ---------- storage (per-viewer convenience; works without it) ----------
+  const KEY = "familiada-v1";
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  // Sample set (invented, approximate points) – clearly marked; replaced by survey results
+  const SAMPLE = [
+    { q: "Czego szukamy w domu tuż przed wyjściem?", a: [["klucze", 40], ["telefon", 25], ["portfel", 15], ["okulary", 12], ["buty dziecka", 8]], sample: true },
+    { q: "Co dziecko chce kupić przy kasie?", a: [["słodycze", 45], ["zabawkę", 20], ["gumę", 15], ["lizaka", 12], ["napój", 8]], sample: true },
+    { q: "Rzecz trzymana w szufladzie, „bo się przyda”", a: [["kable i ładowarki", 35], ["reklamówki", 25], ["baterie", 15], ["śrubki", 15], ["stare klucze", 10]], sample: true },
+    { q: "Na co Polacy wydają za dużo?", a: [["jedzenie", 30], ["ubrania", 25], ["elektronika", 20], ["wakacje", 15], ["samochód", 10]], sample: true },
+    { q: "Pierwsza rzecz po wygraniu miliona", a: [["dom lub mieszkanie", 35], ["spłata kredytu", 25], ["podróż", 20], ["samochód", 12], ["dar dla potrzebujących", 8]], sample: true },
+    { q: "Co robimy z drobnymi z portfela?", a: [["do skarbonki", 35], ["na tacę", 25], ["dzieciom", 20], ["wydajemy", 12], ["leżą w kieszeni", 8]], sample: true },
+  ];
+  const MULT = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 3 };
+
+  const S = Object.assign({
+    questions: SAMPLE, url: "", view: "game",
+    round: 1, qi: 0, revealed: [], strikes: 0, scoreW: 0, scoreH: 0, used: [], panelHidden: false,
+    final: { picks: [0, 1, 2, 3, 4], p1: [-1, -1, -1, -1, -1], p2: [-1, -1, -1, -1, -1] },
+  }, load() || {});
+
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+  // ---------- sound (starts only after a click) ----------
+  let actx = null;
+  const tone = (freq, dur, type = "square", vol = 0.08) => {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = vol;
+      o.connect(g); g.connect(actx.destination); o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur); o.stop(actx.currentTime + dur);
+    } catch (e) {}
+  };
+  const dingSound = () => { tone(880, 0.15); setTimeout(() => tone(1320, 0.25), 120); };
+  const buzzSound = () => tone(110, 0.6, "sawtooth", 0.12);
+
+  // ---------- views ----------
+  function setView(v) {
+    S.view = v;
+    document.querySelectorAll("nav button[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
+    ["qr", "game", "final", "questions"].forEach(n => $("view-" + n).hidden = n !== v);
+    save(); render();
+  }
+  document.querySelectorAll("nav button[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+  $("fsBtn").addEventListener("click", () => {
+    const d = document.documentElement;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (d.requestFullscreen) d.requestFullscreen().catch(() => {});
+  });
+
+  // ---------- QR ----------
+  function renderQR() {
+    const box = $("qrbox"); box.innerHTML = "";
+    $("formUrl").value = S.url || "";
+    $("qrUrl").textContent = S.url || "Wklej link do formularza w panelu poniżej";
+    if (S.url && window.QRCode) new QRCode(box, { text: S.url, width: 420, height: 420, correctLevel: QRCode.CorrectLevel.M });
+    else if (!S.url) box.appendChild(el("div", "hint", "Brak linku"));
+  }
+  $("qrMake").addEventListener("click", () => { S.url = $("formUrl").value.trim(); save(); renderQR(); });
+
+  // ---------- game ----------
+  const curQ = () => S.questions[S.qi] || null;
+  const pot = () => { const q = curQ(); if (!q) return 0; return S.revealed.reduce((s, i) => s + (q.a[i] ? Number(q.a[i][1]) || 0 : 0), 0); };
+
+  function renderGame() {
+    $("scoreW").textContent = S.scoreW; $("scoreH").textContent = S.scoreH;
+    const m = MULT[S.round] || 1;
+    $("potLbl").textContent = "Pula ×" + m; $("pot").textContent = pot() * m;
+    $("roundLbl").textContent = "Runda " + S.round + (m > 1 ? " · punkty ×" + m : "");
+    $("roundSel").value = String(S.round);
+    const qs = $("qSel"); qs.innerHTML = "";
+    S.questions.forEach((q, i) => { const o = el("option", null, (S.used.includes(i) ? "✓ " : "") + (i + 1) + ". " + q.q); o.value = i; qs.appendChild(o); });
+    qs.value = String(S.qi);
+    const q = curQ();
+    $("qtext").textContent = q ? q.q : "Brak pytań – wczytaj je w zakładce Pytania";
+    const slots = $("slots"); slots.innerHTML = "";
+    if (q) q.a.forEach((a, i) => {
+      const shown = S.revealed.includes(i);
+      const b = el("button", "slot" + (shown ? "" : " hidden"));
+      b.type = "button"; b.setAttribute("aria-label", shown ? `${i + 1}. ${a[0]}, ${a[1]} punktów` : `Odkryj odpowiedź ${i + 1}`);
+      b.append(el("span", null, (i + 1) + "."), el("span", "ans", shown ? a[0] : "•".repeat(14)), el("span", "p", shown ? String(a[1]) : "--"));
+      b.addEventListener("click", () => reveal(i));
+      slots.appendChild(b);
+    });
+    const st = $("strikes"); st.innerHTML = "";
+    for (let i = 0; i < S.strikes; i++) st.appendChild(el("span", null, "X"));
+    document.querySelectorAll("[data-host]").forEach(p => p.hidden = S.panelHidden);
+    $("hidePanel").textContent = S.panelHidden ? "Pokaż panel" : "Ukryj panel";
+  }
+  function reveal(i) {
+    const q = curQ(); if (!q || !q.a[i] || S.revealed.includes(i)) return;
+    S.revealed.push(i); save(); renderGame(); dingSound();
+    const b = $("slots").children[i]; if (b) b.classList.add("just");
+  }
+  function strike() {
+    S.strikes = Math.min(3, S.strikes + 1); save(); renderGame(); buzzSound();
+    const x = $("bigx"); x.classList.remove("show"); void x.offsetWidth; x.classList.add("show");
+  }
+  function give(team) {
+    const val = pot() * (MULT[S.round] || 1);
+    if (team === "w") S.scoreW += val; else S.scoreH += val;
+    if (!S.used.includes(S.qi)) S.used.push(S.qi);
+    const q = curQ(); if (q) S.revealed = q.a.map((_, i) => i);
+    save(); renderGame(); dingSound();
+  }
+  function selectQ(i) { S.qi = i; S.revealed = []; S.strikes = 0; save(); renderGame(); }
+  $("qSel").addEventListener("change", e => selectQ(Number(e.target.value)));
+  $("roundSel").addEventListener("change", e => { S.round = Number(e.target.value); save(); renderGame(); });
+  $("xBtn").addEventListener("click", strike);
+  $("revealAll").addEventListener("click", () => { const q = curQ(); if (q) { S.revealed = q.a.map((_, i) => i); save(); renderGame(); } });
+  $("giveW").addEventListener("click", () => give("w"));
+  $("giveH").addEventListener("click", () => give("h"));
+  $("nextQ").addEventListener("click", () => {
+    if (!S.questions.length) return;
+    let n = S.qi; for (let k = 1; k <= S.questions.length; k++) { const c = (S.qi + k) % S.questions.length; if (!S.used.includes(c)) { n = c; break; } }
+    if (S.round < 5) S.round++;
+    selectQ(n);
+  });
+  let resetArmed = false;
+  $("resetScores").addEventListener("click", () => {
+    if (!resetArmed) { resetArmed = true; $("resetConfirm").hidden = false; setTimeout(() => { resetArmed = false; $("resetConfirm").hidden = true; }, 4000); return; }
+    resetArmed = false; $("resetConfirm").hidden = true;
+    Object.assign(S, { scoreW: 0, scoreH: 0, used: [], round: 1, revealed: [], strikes: 0 }); save(); renderGame();
+  });
+  $("hidePanel").addEventListener("click", () => { S.panelHidden = !S.panelHidden; save(); renderGame(); });
+  document.addEventListener("keydown", e => {
+    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if (e.key.toLowerCase() === "h") { S.panelHidden = !S.panelHidden; save(); render(); }
+    if (S.view !== "game") return;
+    if (/^[1-8]$/.test(e.key)) reveal(Number(e.key) - 1);
+    if (e.key.toLowerCase() === "x") strike();
+  });
+
+  // ---------- final ----------
+  let tInt = null;
+  function runTimer(sec) {
+    clearInterval(tInt); let left = sec; const t = $("timer");
+    const tick = () => { t.textContent = left; t.classList.toggle("low", left <= 5); if (left <= 0) { clearInterval(tInt); buzzSound(); } left--; };
+    tick(); tInt = setInterval(tick, 1000); tone(660, 0.12);
+  }
+  $("t20").addEventListener("click", () => runTimer(20));
+  $("t25").addEventListener("click", () => runTimer(25));
+  $("tStop").addEventListener("click", () => clearInterval(tInt));
+  $("fReset").addEventListener("click", () => { S.final.p1 = [-1, -1, -1, -1, -1]; S.final.p2 = [-1, -1, -1, -1, -1]; save(); renderFinal(); });
+
+  function renderFinal() {
+    const F = S.final;
+    const pick = $("fPick"); pick.innerHTML = "";
+    F.picks.forEach((qi, k) => {
+      const s = el("select"); s.setAttribute("aria-label", "Pytanie finałowe " + (k + 1)); s.style.maxWidth = "220px";
+      S.questions.forEach((q, i) => { const o = el("option", null, (i + 1) + ". " + q.q); o.value = i; s.appendChild(o); });
+      s.value = String(qi);
+      s.addEventListener("change", () => { F.picks[k] = Number(s.value); F.p1[k] = -1; F.p2[k] = -1; save(); renderFinal(); });
+      pick.appendChild(s);
+    });
+    let total = 0;
+    [["p1", "fcol1"], ["p2", "fcol2"]].forEach(([p, col]) => {
+      const c = $(col); c.innerHTML = "";
+      F.picks.forEach((qi, k) => {
+        const q = S.questions[qi]; if (!q) return;
+        c.appendChild(el("p", "fq", (k + 1) + ". " + q.q));
+        const row = el("div", "frow");
+        const s = el("select"); s.setAttribute("aria-label", `${p === "p1" ? "Osoba 1" : "Osoba 2"}, pytanie ${k + 1}`);
+        const none = el("option", null, "— brak / 0 —"); none.value = -1; s.appendChild(none);
+        q.a.forEach((a, i) => {
+          const o = el("option", null, a[0] + " (" + a[1] + ")"); o.value = i;
+          if (p === "p2" && F.p1[k] === i) o.disabled = true; // nie można powtórzyć
+          s.appendChild(o);
+        });
+        s.value = String(F[p][k]);
+        s.addEventListener("change", () => { F[p][k] = Number(s.value); save(); renderFinal(); if (F[p][k] >= 0) dingSound(); });
+        const v = F[p][k] >= 0 && q.a[F[p][k]] ? Number(q.a[F[p][k]][1]) : 0; total += v;
+        row.append(s, el("div", "fp", String(v)));
+        c.appendChild(row);
+      });
+    });
+    const t = $("fTotal"); t.textContent = total; t.classList.toggle("win", total >= 200);
+  }
+
+  // ---------- questions ----------
+  function parsePaste(txt) {
+    return txt.split(/\r?\n/).map(l => l.split("\t").map(c => c.trim())).filter(c => c[0])
+      .map(c => {
+        const a = [];
+        for (let i = 1; i + 1 < c.length + 1; i += 2) { if (c[i]) a.push([c[i], Number(String(c[i + 1] || "0").replace(",", ".")) || 0]); }
+        return { q: c[0], a: a.sort((x, y) => y[1] - x[1]).slice(0, 8) };
+      }).filter(q => q.a.length);
+  }
+  $("loadPaste").addEventListener("click", () => {
+    const qs = parsePaste($("pasteBox").value);
+    if (!qs.length) { $("loadMsg").textContent = "Nie rozpoznano pytań. Wklej wiersze z zakładki „Do tablicy”: pytanie, odpowiedź, punkty, odpowiedź, punkty…"; return; }
+    S.questions = qs; S.qi = 0; S.used = []; S.revealed = []; S.strikes = 0;
+    S.final.picks = [0, 1, 2, 3, 4].map(i => Math.min(i, qs.length - 1)); S.final.p1 = [-1, -1, -1, -1, -1]; S.final.p2 = [-1, -1, -1, -1, -1];
+    save(); $("loadMsg").textContent = "Wczytano pytań: " + qs.length; render();
+  });
+  $("loadSample").addEventListener("click", () => {
+    S.questions = SAMPLE; S.qi = 0; S.used = []; S.revealed = []; S.strikes = 0; save();
+    $("loadMsg").textContent = "Wczytano przykładowe pytania (punkty orientacyjne)."; render();
+  });
+  function renderQuestions() {
+    const l = $("qlist"); l.innerHTML = "";
+    S.questions.forEach((q, i) => {
+      const it = el("div", "qitem" + (S.used.includes(i) ? " used" : ""));
+      const t = el("div", "t");
+      t.append(el("div", null, (i + 1) + ". " + q.q), el("div", "a", q.a.map(a => a[0] + " " + a[1]).join(" · ")));
+      it.appendChild(t);
+      if (q.sample) it.appendChild(el("span", "badge", "przykład"));
+      l.appendChild(it);
+    });
+  }
+
+  function render() {
+    if (S.view === "qr") renderQR();
+    if (S.view === "game") renderGame();
+    if (S.view === "final") renderFinal();
+    if (S.view === "questions") renderQuestions();
+    document.querySelectorAll("[data-host]").forEach(p => p.hidden = S.panelHidden);
+  }
+  setView(S.view || "game");
+})();
+</script>
