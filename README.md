@@ -42,6 +42,7 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 4. `supabase/migrations/0004_board_title.sql` – własny tytuł gry na tablicy (Ustawienia rozgrywki). **Uruchom też na istniejącej bazie.**
 5. `supabase/migrations/0005_branding.sql` – nazwa wydarzenia i współorganizator z logo (Ustawienia rozgrywki); istniejącym rozgrywkom wpisuje dotychczasowe „Rekolekcje dla małżeństw · Kraków 2026” i Wspólnotę Małżeństw. **Uruchom też na istniejącej bazie.**
 6. `supabase/migrations/0006_logo_version.sql` – wersja logo współorganizatora (logo idzie osobnym adresem `/api/logo/<id>`, z cache). **Uruchom też na istniejącej bazie.**
+7. `supabase/migrations/0007_save_game_state.sql` – zapis stanu gry jednym zapytaniem (funkcja `upsert_game_state`). **Wymagana przed wdrożeniem kodu, który jej używa.**
 
 Albo zamiast kroku 2: `npm run seed` (używa `.env.local`).
 

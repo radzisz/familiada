@@ -1,36 +1,40 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseGameState } from "@/lib/game";
-import { parseBody } from "@/lib/server/http";
-import { adminRoute } from "@/lib/server/route";
+import { jsonError, parseBody } from "@/lib/server/http";
+import { adminEventIdRoute, adminRoute } from "@/lib/server/route";
 import { brandingOf } from "@/lib/server/repo/events";
-import { fetchBoard, fetchGameState, upsertGameState } from "@/lib/server/repo/game";
+import { fetchBoard, fetchGameState, upsertGameStateIfNewer } from "@/lib/server/repo/game";
 import { fetchQuestions } from "@/lib/server/repo/questions";
 
 export const dynamic = "force-dynamic";
 
-/** Stan gry rozgrywki z `?event=<id>`; z `&board=1` także pytania i punkty dla rund i finału. */
+/**
+ * Stan gry rozgrywki z `?event=<id>` – jedno zapytanie do bazy (odpytywanie i odświeżenie po zapisie
+ * z pilota). Z `&board=1` także pytania, punkty i oprawa – raz przy otwarciu tablicy i przy „Dalej”.
+ */
 export async function GET(req: Request): Promise<NextResponse> {
-  const withBoard = new URL(req.url).searchParams.get("board") === "1";
-  return adminRoute(req, "game.get", async ({ db, event }) => {
-    const state = await fetchGameState(db, event.id);
-    if (!withBoard) return NextResponse.json({ state });
-    const board = await fetchBoard(db, event.game_plan, await fetchQuestions(db, event.id), brandingOf(event));
+  if (new URL(req.url).searchParams.get("board") !== "1") {
+    return adminEventIdRoute(req, "game.get", async ({ db, eventId }) => NextResponse.json({ state: await fetchGameState(db, eventId) }));
+  }
+  return adminRoute(req, "game.get board", async ({ db, event }) => {
+    const [state, questions] = await Promise.all([fetchGameState(db, event.id), fetchQuestions(db, event.id)]);
+    const board = await fetchBoard(db, event.game_plan, questions, brandingOf(event));
     return NextResponse.json({ state, board });
   });
 }
 
 const PutSchema = z.object({ state: z.unknown() });
 
-/** Zapis stanu gry; starszy stan (niższe `rev`) nie nadpisuje nowszego. */
+/** Zapis stanu gry jednym zapytaniem do bazy; starszy stan (niższe `rev`) nie nadpisuje nowszego. */
 export async function PUT(req: Request): Promise<NextResponse> {
   const body = await parseBody(req, PutSchema);
   if (body instanceof NextResponse) return body;
   const incoming = parseGameState(body.state);
-  return adminRoute(req, "game.put", async ({ db, event }) => {
-    const current = await fetchGameState(db, event.id);
-    if (current.rev > incoming.rev) return NextResponse.json({ ok: false, state: current });
-    await upsertGameState(db, event.id, incoming);
-    return NextResponse.json({ ok: true });
+  return adminEventIdRoute(req, "game.put", async ({ db, eventId }) => {
+    const result = await upsertGameStateIfNewer(db, eventId, incoming);
+    if (result.saved) return NextResponse.json({ ok: true });
+    if (!result.newer) return jsonError("Nie ma takiej rozgrywki.", 404);
+    return NextResponse.json({ ok: false, state: result.newer });
   });
 }
