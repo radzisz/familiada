@@ -1,3 +1,5 @@
+import type { Branding } from "./branding";
+
 export type Audience = "all" | "wife" | "husband";
 export type Role = "wife" | "husband";
 
@@ -37,8 +39,8 @@ export function emptyPlan(): GamePlan {
   return { rounds: Array(ROUND_COUNT).fill(null), final: Array(FINAL_COUNT).fill(null) };
 }
 
-/** Pytania gry według planu z /admin (null tam, gdzie nic nie przypisano). */
-export interface Board {
+/** Pytania gry według planu z /admin (null tam, gdzie nic nie przypisano) i oprawa rozgrywki (tytuł, organizatorzy). */
+export interface Board extends Branding {
   rounds: (BoardQuestion | null)[];
   final: (BoardQuestion | null)[];
 }

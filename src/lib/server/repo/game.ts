@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initialGameState, parseGameState, type GameState } from "@/lib/game";
+import type { Branding } from "@/lib/branding";
 import { boardAnswers } from "@/lib/scoring";
 import type { Board, BoardQuestion, GamePlan, Question } from "@/lib/types";
 import { check } from "../db";
@@ -39,13 +40,13 @@ export async function fetchBoardQuestion(db: SupabaseClient, question: Question)
   };
 }
 
-/** Odczyt pytań i punktów dla wszystkich rund i finału według planu gry. */
-export async function fetchBoard(db: SupabaseClient, plan: GamePlan, questions: Question[]): Promise<Board> {
+/** Odczyt pytań i punktów dla wszystkich rund i finału według planu gry (z oprawą: tytuł, organizatorzy). */
+export async function fetchBoard(db: SupabaseClient, plan: GamePlan, questions: Question[], branding: Branding): Promise<Board> {
   const byId = new Map(questions.map((q) => [q.id, q]));
   const load = (id: string | null) => {
     const q = id ? byId.get(id) : undefined;
     return q ? fetchBoardQuestion(db, q) : Promise.resolve(null);
   };
   const [rounds, final] = await Promise.all([Promise.all(plan.rounds.map(load)), Promise.all(plan.final.map(load))]);
-  return { rounds, final };
+  return { rounds, final, ...branding };
 }

@@ -52,10 +52,19 @@
 .sv-btn.ghost { background: transparent; color: var(--sv-green); }
 
 
+.sv-credits { margin-top: auto; padding-top: 16px; }
+.sv-footer + .sv-credits { margin-top: 0; }
 .sv-footer { margin-top: auto; padding-top: 28px; border-top: 1px solid #cfdcd7; text-align: center; }
 .sv-footer-title { margin: 0 0 12px; color: var(--sv-muted); font-size: 15px; }
 .sv-partners { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: 28px; }
-.sv-partners a { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--sv-green); font-size: 13px; text-decoration: none; }
+.sv-partner { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--sv-green); font-size: 13px; text-decoration: none; }
 .sv-partners img { border-radius: 50%; background: #fff; }
 
 @media (prefers-reduced-motion: reduce) { .sv-progress-bar { transition: none; } }
+
+/* Stały nagłówek i stopka, przewijany tylko środek */
+.sv { height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.sv-card { min-height: 0; height: 100%; gap: 10px; }
+.sv-brand { flex: none; }
+.sv-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 2px 2px 12px; overscroll-behavior: contain; }
+.sv-footer { flex: none; margin-top: 0; padding-top: 12px; }

@@ -304,6 +304,10 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-thanks-logos li { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .tb-thanks-disc { display: flex; width: clamp(140px, 22vw, 280px); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 6%; box-shadow: 0 0 32px color-mix(in srgb, var(--led) 35%, transparent); }
 .tb-thanks-disc img { width: 100%; height: 100%; object-fit: contain; }
+/* Logo wykadrowane w panelu ma już białe tło i margines – wypełnia cały krążek. */
+.tb-thanks-disc.fill { padding: 0; overflow: hidden; }
+.tb-thanks-disc.fill img { object-fit: cover; }
+.tb-event-name { margin: 0; color: var(--text); font-size: clamp(18px, 2.6vw, 34px); font-weight: 700; letter-spacing: 1px; }
 .tb-thanks-name { font-size: clamp(16px, 2vw, 26px); font-weight: 700; color: var(--text); }
 /* Pole drużyny jako przycisk wyboru, kto odpowiada (przy panelu prowadzącego): wygląda jak zwykłe pole wyniku. */
 .tb button.tb-team { width: 100%; border-radius: 14px; padding: 8px 14px; text-align: left; color: var(--text); font: inherit; cursor: pointer; }

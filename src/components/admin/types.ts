@@ -1,3 +1,4 @@
+import type { CoOrganizer } from "@/lib/branding";
 import type { BoardAnswer, GamePlan, Question } from "@/lib/types";
 import type { GroupDetail } from "@/lib/detail";
 
@@ -7,7 +8,16 @@ export interface OverviewQuestion extends Question {
 }
 
 export interface Overview {
-  event: { id: string; name: string; surveyOpen: boolean; isTest: boolean };
+  event: {
+    id: string;
+    name: string;
+    surveyOpen: boolean;
+    isTest: boolean;
+    boardTitle: string;
+    /** Nazwa wydarzenia; "" = nie pokazujemy. */
+    eventName: string;
+    coOrganizer: CoOrganizer | null;
+  };
   counts: { wife: number; husband: number };
   questions: OverviewQuestion[];
   plan: GamePlan;

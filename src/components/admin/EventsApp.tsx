@@ -1,5 +1,6 @@
 "use client";
 
+import { Credits } from "@/components/Credits";
 import { useCallback, useEffect, useState } from "react";
 import { apiJson } from "@/lib/client/api";
 import { AdminHeader } from "./AdminHeader";
@@ -43,6 +44,7 @@ export function EventsApp() {
           {events?.map((e) => <EventItem key={e.id} event={e} onChange={reload} />)}
         </ul>
       </section>
+      <footer className="ad-credits"><Credits /></footer>
     </main>
   );
 }

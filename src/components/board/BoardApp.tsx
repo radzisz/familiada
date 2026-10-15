@@ -65,7 +65,7 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
     <main className={`tb${pilot ? " pilot" : ""}`}>
       <header className="tb-head">
         {/* Na ekranie startowym tytuł jest duży na środku – w nagłówku byłby powtórzeniem. */}
-        <h1 className={state.started ? undefined : "tb-sr"}>FAMILIADA MAŁŻEŃSKA</h1>
+        <h1 className={state.started ? undefined : "tb-sr"}>{board.title.toUpperCase()}</h1>
         <nav aria-label="Widoki" hidden={hideHost}>
           {!pilot && <button type="button" onClick={toggleFullscreen}>Pełny ekran</button>}
         </nav>
@@ -73,9 +73,9 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
       {error && !hideHost && <p className="tb-error" role="alert">{error}</p>}
       {state.view === "game" && <GameView state={state} board={board} fx={fx} sound={sound} hideHost={hideHost} pilot={pilot} dispatch={dispatch} onNext={goNext} onTogglePanel={() => setPanelHidden((h) => !h)} />}
       {state.view === "final" && <FinalView state={state} board={board} hideHost={hideHost} pilot={pilot} dispatch={dispatch} sound={sound} onTogglePanel={() => setPanelHidden((h) => !h)} />}
-      {state.view === "thanks" && <ThanksView state={state} hideHost={hideHost} dispatch={dispatch} />}
+      {state.view === "thanks" && <ThanksView state={state} branding={board} hideHost={hideHost} dispatch={dispatch} />}
       {/* Przed startem tablica stoi pod półprzezroczystą nakładką z tytułem i przyciskiem „Start”. */}
-      {!state.started && <StartView hideHost={hideHost} dispatch={dispatch} />}
+      {!state.started && <StartView branding={board} hideHost={hideHost} dispatch={dispatch} />}
       {!pilot && fx.intro && <RoundIntro key={fx.intro.key} count={fx.intro.count} label={fx.intro.label} onPop={sound.beep} />}
       {hideHost && (
         <button type="button" className="tb-showpanel" onClick={() => setPanelHidden(false)} title="Pokaż panel prowadzącego (H)">

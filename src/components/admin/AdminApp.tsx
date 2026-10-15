@@ -1,5 +1,6 @@
 "use client";
 
+import { Credits } from "@/components/Credits";
 import { useEffect, useState } from "react";
 import { AdminHeader } from "./AdminHeader";
 import { AnswersTab } from "./AnswersTab";
@@ -7,7 +8,7 @@ import { GameTab } from "./GameTab";
 import { SurveyToggle } from "./LiveBar";
 import { QuestionList } from "./QuestionList";
 import { SettingsTab } from "./SettingsTab";
-import { ShareDialog } from "./ShareDialog";
+import { ShareDialog, SURVEY_CLOSED_WARNING } from "./ShareDialog";
 import { useOverview } from "./useOverview";
 import type { Overview } from "./types";
 import "./admin.css";
@@ -55,6 +56,7 @@ export function AdminApp({ eventId }: { eventId: string }) {
         />
         <ShareDialog
           label="Ankieta" path={`/ankieta/${eventId}`} screenPath={`/qr/${eventId}`}
+          warning={overview && !overview.event.surveyOpen ? SURVEY_CLOSED_WARNING : null}
           hint="Dla uczestników: zeskanuj kod albo wyślij link. „Kod na cały ekran” pokażesz na rzutniku."
         />
       </AdminHeader>
@@ -69,19 +71,24 @@ export function AdminApp({ eventId }: { eventId: string }) {
               </button>
             ))}
           </div>
+          {/* Nagłówek i zakładki stoją w miejscu – przewija się tylko zawartość zakładki. */}
+          <div className="ad-scroll">
           {tab === "questions" && (
-            <QuestionList overview={overview} toolbar={<SurveyToggle overview={overview} onChange={reload} />} onChange={reload} />
+            <QuestionList overview={overview} onChange={reload} />
           )}
           {tab === "answers" && (
             <AnswersTab
               overview={overview} selected={selected} revision={revision}
+              surveyToggle={<SurveyToggle overview={overview} onChange={reload} />}
               onSelect={setSelected} onChange={reload} onRegrouped={regrouped}
             />
           )}
           {tab === "game" && <GameTab overview={overview} onChange={reload} />}
           {tab === "settings" && <SettingsTab overview={overview} onChange={reload} />}
+          </div>
         </>
       )}
+      <footer className="ad-credits"><Credits /></footer>
     </main>
   );
 }

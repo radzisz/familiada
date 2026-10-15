@@ -4,6 +4,10 @@ import { useState } from "react";
 import { postJson } from "@/lib/client/api";
 import { eventUrl } from "@/lib/client/eventUrl";
 import { useTwoStep } from "@/lib/client/useTwoStep";
+import { BOARD_TITLE_MAX, DEFAULT_BOARD_TITLE } from "@/lib/boardTitle";
+import { EVENT_NAME_MAX, HOST_PARTNER } from "@/lib/branding";
+import { CoOrganizerEditor } from "./CoOrganizerEditor";
+import { TextSettingField } from "./TextSettingField";
 import { TestModeToggle } from "./TestDataPanel";
 import type { Overview } from "./types";
 
@@ -21,10 +25,26 @@ const RESETS: ResetInfo[] = [
   { target: "questions", label: "Wyczyść pytania", description: (o) => `Usuwa ${o.questions.length} pytań razem z ich odpowiedziami, wybór pytań do gry i stan gry.` },
 ];
 
-/** Zakładka „Ustawienia”: tryb testowy i osobne czyszczenie stanu gry, odpowiedzi i pytań. */
+/** Zakładka „Ustawienia”: oprawa (tytuł, nazwa wydarzenia, współorganizator), tryb testowy i czyszczenie danych. */
 export function SettingsTab({ overview, onChange }: { overview: Overview; onChange: () => Promise<void> }) {
+  const { event } = overview;
   return (
     <section className="ad-panel ad-settings" aria-label="Ustawienia">
+      <h2>Tytuł gry</h2>
+      <p className="ad-muted">Na tablicy, pilocie, ekranie startowym i w nagłówku ankiety. Puste pole = „{DEFAULT_BOARD_TITLE}”.</p>
+      <TextSettingField
+        eventId={event.id} field="boardTitle" label="Tytuł gry" value={event.boardTitle}
+        placeholder={DEFAULT_BOARD_TITLE} maxLength={BOARD_TITLE_MAX} onChange={onChange}
+      />
+      <h2>Nazwa wydarzenia</h2>
+      <p className="ad-muted">Nad logami na pierwszej i ostatniej stronie ankiety oraz na ekranie startowym i końcowym tablicy. Puste pole = bez nazwy.</p>
+      <TextSettingField
+        eventId={event.id} field="eventName" label="Nazwa wydarzenia" value={event.eventName}
+        placeholder="brak nazwy – np. Rekolekcje dla małżeństw · Kraków 2026" maxLength={EVENT_NAME_MAX} onChange={onChange}
+      />
+      <h2>Współorganizator</h2>
+      <p className="ad-muted">Logo obok {HOST_PARTNER.name} (ono jest zawsze) – w ankiecie i na tablicy.</p>
+      <CoOrganizerEditor key={JSON.stringify(event.coOrganizer)} eventId={event.id} value={event.coOrganizer} onChange={onChange} />
       <h2>Tryb testowy</h2>
       <p className="ad-muted">Pozwala generować losowe odpowiedzi do sprawdzenia grupowania i gry (zakładka „Odpowiedzi”).</p>
       <div className="ad-row">

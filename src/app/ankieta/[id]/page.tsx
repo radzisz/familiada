@@ -2,7 +2,7 @@ import { Survey, type SurveyQuestion } from "@/components/survey/Survey";
 import { SurveyMessage } from "@/components/survey/SurveyMessage";
 import { serviceClient } from "@/lib/server/db";
 import { fetchEventForPage } from "@/lib/server/pageEvent";
-import type { EventRow } from "@/lib/server/repo/events";
+import { brandingOf, type EventRow } from "@/lib/server/repo/events";
 import { fetchQuestions } from "@/lib/server/repo/questions";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export default async function SurveyPage({ params }: { params: Promise<{ id: str
   }
   if (!data.event) return <SurveyMessage title="Nie ma takiej ankiety" text="Sprawdź link albo zeskanuj kod QR jeszcze raz." />;
   if (!data.event.survey_open) {
-    return <SurveyMessage title="Ankieta zamknięta" text="Dziękujemy! Wyniki zobaczysz wieczorem na Familiadzie." />;
+    return <SurveyMessage title="Ankieta zamknięta" text="Dziękujemy! Wyniki zobaczysz wieczorem na Familiadzie." branding={brandingOf(data.event)} />;
   }
-  return <Survey eventId={data.event.id} questions={data.questions} />;
+  return <Survey eventId={data.event.id} questions={data.questions} branding={brandingOf(data.event)} />;
 }

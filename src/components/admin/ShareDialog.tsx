@@ -12,11 +12,17 @@ interface Props {
   hint: string;
   /** Pełnoekranowa wersja kodu (np. na rzutnik). */
   screenPath: string;
+  /** Ostrzeżenie na górze okna (np. „ankieta zamknięta”); null = brak. */
+  warning?: string | null;
   className?: string;
 }
 
+/** Ostrzeżenie w oknie ankiety, gdy ankieta jest zamknięta. */
+export const SURVEY_CLOSED_WARNING =
+  "Ankieta jest zamknięta – kto zeskanuje kod, zobaczy „Ankieta zamknięta” i nie odpowie. Otwórz ją w zakładce „Odpowiedzi”.";
+
 /** Jeden przycisk zamiast „link” + „kod QR”: okno z kodem QR, adresem do skopiowania i linkami. */
-export function ShareDialog({ label, path, hint, screenPath, className }: Props) {
+export function ShareDialog({ label, path, hint, screenPath, warning = null, className }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [url, setUrl] = useState("");
   const open = () => {
@@ -27,13 +33,13 @@ export function ShareDialog({ label, path, hint, screenPath, className }: Props)
     <>
       <button type="button" className={className ?? "ad-navbtn"} onClick={open}>{label}</button>
       <dialog ref={dialogRef} className="ad-dialog ad-share" aria-label={label}>
-        {url && <ShareBody label={label} url={url} hint={hint} screenPath={screenPath} onClose={() => dialogRef.current?.close()} />}
+        {url && <ShareBody label={label} url={url} hint={hint} warning={warning} screenPath={screenPath} onClose={() => dialogRef.current?.close()} />}
       </dialog>
     </>
   );
 }
 
-function ShareBody(p: { label: string; url: string; hint: string; screenPath: string; onClose: () => void }) {
+function ShareBody(p: { label: string; url: string; hint: string; warning: string | null; screenPath: string; onClose: () => void }) {
   const { svg, error } = useQrSvg(p.url);
   const [copied, setCopied] = useState("");
   const copy = () => {
@@ -48,6 +54,7 @@ function ShareBody(p: { label: string; url: string; hint: string; screenPath: st
   return (
     <div className="ad-share-body">
       <h2>{p.label}</h2>
+      {p.warning && <p className="ad-share-warn" role="alert">{p.warning}</p>}
       <p className="ad-muted">{p.hint}</p>
       {/* SVG generowane lokalnie przez bibliotekę qrcode z naszego własnego adresu. */}
       {svg && <div className="ad-share-qr" role="img" aria-label={`Kod QR: ${p.url}`} dangerouslySetInnerHTML={{ __html: svg }} />}

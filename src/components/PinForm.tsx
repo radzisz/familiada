@@ -1,5 +1,6 @@
 "use client";
 
+import { Credits } from "@/components/Credits";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { postJson } from "@/lib/client/api";
@@ -34,6 +35,7 @@ export function PinForm({ title }: { title: string }) {
         {error && <p className="pin-error" role="alert">{error}</p>}
         <button type="submit" disabled={busy || pin === ""}>{busy ? "Sprawdzam…" : "Wejdź"}</button>
       </form>
+      <Credits onDark />
     </main>
   );
 }

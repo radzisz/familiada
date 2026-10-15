@@ -3,6 +3,7 @@ import { z } from "zod";
 import { parseGameState } from "@/lib/game";
 import { parseBody } from "@/lib/server/http";
 import { adminRoute } from "@/lib/server/route";
+import { brandingOf } from "@/lib/server/repo/events";
 import { fetchBoard, fetchGameState, upsertGameState } from "@/lib/server/repo/game";
 import { fetchQuestions } from "@/lib/server/repo/questions";
 
@@ -14,7 +15,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   return adminRoute(req, "game.get", async ({ db, event }) => {
     const state = await fetchGameState(db, event.id);
     if (!withBoard) return NextResponse.json({ state });
-    const board = await fetchBoard(db, event.game_plan, await fetchQuestions(db, event.id));
+    const board = await fetchBoard(db, event.game_plan, await fetchQuestions(db, event.id), brandingOf(event));
     return NextResponse.json({ state, board });
   });
 }

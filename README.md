@@ -39,6 +39,8 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 1. `supabase/migrations/0001_schema.sql` – tabele, RLS, funkcje,
 2. `supabase/migrations/0002_seed.sql` – pierwsza rozgrywka z 26 pytaniami (opcjonalnie – rozgrywki tworzysz też w `/admin`),
 3. `supabase/migrations/0003_rozgrywki.sql` – oznaczenie „testowa”, licznik rozgrywek, usunięcie „aktywnego wydarzenia”. **Uruchom też, jeśli baza ma już 0001–0002.**
+4. `supabase/migrations/0004_board_title.sql` – własny tytuł gry na tablicy (Ustawienia rozgrywki). **Uruchom też na istniejącej bazie.**
+5. `supabase/migrations/0005_branding.sql` – nazwa wydarzenia i współorganizator z logo (Ustawienia rozgrywki); istniejącym rozgrywkom wpisuje dotychczasowe „Rekolekcje dla małżeństw · Kraków 2026” i Wspólnotę Małżeństw. **Uruchom też na istniejącej bazie.**
 
 Albo zamiast kroku 2: `npm run seed` (używa `.env.local`).
 

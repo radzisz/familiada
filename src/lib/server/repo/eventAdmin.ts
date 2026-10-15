@@ -2,6 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assert } from "@/lib/assert";
 import defaultQuestions from "@/lib/data/questions.json";
+import { storedBoardTitle } from "@/lib/boardTitle";
+import { isLogoSource, storedText, type CoOrganizer } from "@/lib/branding";
 import { emptyPlan, type Audience } from "@/lib/types";
 import { check } from "../db";
 import { updateGamePlan } from "./events";
@@ -75,8 +77,32 @@ export async function copyQuestions(db: SupabaseClient, fromEventId: string, toE
   await insertQuestionRows(db, toEventId, (data ?? []) as QuestionSeed[]);
 }
 
-export async function updateEvent(db: SupabaseClient, eventId: string, patch: { name?: string; isTest?: boolean }): Promise<void> {
-  const row = { ...(patch.name !== undefined && { name: patch.name }), ...(patch.isTest !== undefined && { is_test: patch.isTest }) };
+export interface EventPatch {
+  name?: string;
+  isTest?: boolean;
+  boardTitle?: string;
+  eventName?: string;
+  /** null usuwa współorganizatora. */
+  coOrganizer?: CoOrganizer | null;
+}
+
+function coOrganizerColumns(co: CoOrganizer | null) {
+  assert(co === null || isLogoSource(co.logo), "coOrganizerColumns: logo source");
+  return { partner_name: co?.name ?? null, partner_url: co?.url ?? null, partner_logo: co?.logo ?? null };
+}
+
+export async function updateEvent(
+  db: SupabaseClient,
+  eventId: string,
+  patch: EventPatch,
+): Promise<void> {
+  const row = {
+    ...(patch.name !== undefined && { name: patch.name }),
+    ...(patch.isTest !== undefined && { is_test: patch.isTest }),
+    ...(patch.boardTitle !== undefined && { board_title: storedBoardTitle(patch.boardTitle) }),
+    ...(patch.eventName !== undefined && { event_name: storedText(patch.eventName) }),
+    ...(patch.coOrganizer !== undefined && coOrganizerColumns(patch.coOrganizer)),
+  };
   assert(Object.keys(row).length > 0, "updateEvent: empty patch");
   const { error } = await db.from("events").update(row).eq("id", eventId);
   check("updateEvent", error);

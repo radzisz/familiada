@@ -1,6 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assert } from "@/lib/assert";
+import { boardTitle } from "@/lib/boardTitle";
+import { coOrganizerFrom, partnersFor, type Branding } from "@/lib/branding";
 import { emptyPlan, FINAL_COUNT, ROUND_COUNT, type GamePlan } from "@/lib/types";
 import { check } from "../db";
 
@@ -10,6 +12,14 @@ export interface EventRow {
   survey_open: boolean;
   is_test: boolean;
   game_plan: GamePlan;
+  /** Własny tytuł na tablicy; null = domyślny. */
+  board_title: string | null;
+  /** Nazwa wydarzenia (ankieta, tablica); null = nie pokazujemy. */
+  event_name: string | null;
+  /** Współorganizator – pokazywany tylko z nazwą i logo. */
+  partner_name: string | null;
+  partner_url: string | null;
+  partner_logo: string | null;
 }
 
 function sanitizePlan(raw: unknown): GamePlan {
@@ -21,11 +31,17 @@ function sanitizePlan(raw: unknown): GamePlan {
   return { rounds: pick(r.rounds, ROUND_COUNT), final: pick(r.final, FINAL_COUNT) };
 }
 
-const EVENT_COLUMNS = "id, name, survey_open, is_test, game_plan";
+const EVENT_COLUMNS = "id, name, survey_open, is_test, game_plan, board_title, event_name, partner_name, partner_url, partner_logo";
 
 function toEventRow(data: unknown): EventRow {
   const row = data as EventRow;
   return { ...row, game_plan: sanitizePlan(row.game_plan) };
+}
+
+/** Tytuł, nazwa wydarzenia i organizatorzy rozgrywki (do ankiety i tablicy). */
+export function brandingOf(event: EventRow): Branding {
+  const co = coOrganizerFrom(event.partner_name, event.partner_url, event.partner_logo);
+  return { title: boardTitle(event.board_title), eventName: event.event_name, partners: partnersFor(co) };
 }
 
 export async function fetchEvent(db: SupabaseClient, eventId: string): Promise<EventRow | null> {

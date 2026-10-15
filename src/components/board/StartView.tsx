@@ -1,28 +1,23 @@
 "use client";
 
-import Image from "next/image";
 import type { GameAction } from "@/lib/game";
-import { PARTNERS } from "@/lib/partners";
+import type { Branding } from "@/lib/branding";
+import { PartnerLogos } from "./PartnerLogos";
 
 interface Props {
+  /** Tytuł, nazwa wydarzenia i organizatorzy z Ustawień rozgrywki. */
+  branding: Branding;
   hideHost: boolean;
   dispatch: (a: GameAction) => void;
 }
 
 /** Ekran startowy przed grą: tytuł i loga organizatorów; „Start” (pilot / panel) zaczyna rundę 1. */
-export function StartView({ hideHost, dispatch }: Props) {
+export function StartView({ branding, hideHost, dispatch }: Props) {
   return (
     <section className="tb-start" aria-label="Ekran startowy">
-      <h2 className="tb-start-title">FAMILIADA<br />MAŁŻEŃSKA</h2>
-      <ul className="tb-thanks-logos tb-start-logos">
-        {PARTNERS.map((p) => (
-          <li key={p.href}>
-            <span className="tb-thanks-disc">
-              <Image src={p.src} alt={`Logo: ${p.name}`} width={240} height={240} priority />
-            </span>
-          </li>
-        ))}
-      </ul>
+      <h2 className="tb-start-title">{branding.title.toUpperCase()}</h2>
+      {branding.eventName && <p className="tb-event-name">{branding.eventName}</p>}
+      <PartnerLogos partners={branding.partners} names={false} className="tb-start-logos" />
       {!hideHost && (
         <button type="button" className="tb-next tb-start-btn" onClick={() => dispatch({ type: "start" })}>
           Start ▶

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { BOARD_TITLE_MAX } from "./boardTitle";
+import { EVENT_NAME_MAX, isLogoSource, PARTNER_NAME_MAX, PARTNER_URL_MAX } from "./branding";
 import { MAX_TEST_SUBMISSIONS } from "./testAnswers";
 import { FINAL_COUNT, MAX_ANSWER_LENGTH, ROUND_COUNT } from "./types";
 
@@ -55,9 +57,24 @@ export const NewEventSchema = z.object({
   questionsFrom: z.union([z.literal("default"), z.literal("none"), z.uuid()]),
 });
 
+const CoOrganizerSchema = z.object({
+  name: z.string().trim().min(1).max(PARTNER_NAME_MAX),
+  url: z.url({ protocol: /^https?$/ }).max(PARTNER_URL_MAX).nullable(),
+  logo: z.string().refine(isLogoSource, "Nieprawidłowe logo."),
+});
+
 export const EventPatchSchema = z
-  .object({ name: EventName.optional(), isTest: z.boolean().optional() })
-  .refine((p) => p.name !== undefined || p.isTest !== undefined);
+  .object({
+    name: EventName.optional(),
+    isTest: z.boolean().optional(),
+    // Tytuł na tablicy; pusty = powrót do domyślnego.
+    boardTitle: z.string().trim().max(BOARD_TITLE_MAX).optional(),
+    // Nazwa wydarzenia (ankieta, tablica); pusta = nie pokazujemy.
+    eventName: z.string().trim().max(EVENT_NAME_MAX).optional(),
+    // Współorganizator z wykadrowanym logo; null = usuń.
+    coOrganizer: CoOrganizerSchema.nullable().optional(),
+  })
+  .refine((p) => Object.values(p).some((v) => v !== undefined));
 
 export const TestAnswersSchema = z.object({
   count: z.number().int().min(1).max(MAX_TEST_SUBMISSIONS),

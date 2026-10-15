@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { GroupDetail } from "@/lib/detail";
 import type { UniqueAnswer } from "@/lib/grouping";
+import { EyeIcon, EyeOffIcon } from "./icons";
 
 export type GroupOp =
   | { op: "move"; normalized: string; groupId: string }
@@ -23,7 +24,7 @@ const DRAG_TYPE = "text/plain";
 const NEW_GROUP = "__new__";
 
 /**
- * Jedna grupa: etykieta, licznik, „Ukryj” i odpowiedzi z jednym poleceniem „przenieś do…”.
+ * Jedna grupa: etykieta, licznik, ikona oka (ukryj / pokaż) i odpowiedzi z jednym poleceniem „przenieś do…”.
  * Grupa z jedną odpowiedzią to jeden wiersz – przeniesienie tej odpowiedzi łączy grupy
  * (pusta grupa znika po stronie serwera).
  */
@@ -53,8 +54,12 @@ export function GroupCard({ group, groups, busy, onOp }: Props) {
         <GroupLabel group={group} busy={busy} onOp={onOp} />
         <span className="ad-group-count">{group.count} os. · {group.points} pkt</span>
         {single && <MoveSelect member={single} others={others} canSplit={false} busy={busy} onOp={onOp} />}
-        <button type="button" className="ad-group-hide" disabled={busy} onClick={() => void onOp({ op: "hide", groupId: group.id, hidden: !group.hidden })}>
-          {group.hidden ? "Pokaż" : "Ukryj"}
+        <button
+          type="button" className="ad-icon ad-group-hide" disabled={busy}
+          aria-label={group.hidden ? "Pokaż grupę na tablicy" : "Ukryj grupę z tablicy"} title={group.hidden ? "Pokaż" : "Ukryj"}
+          onClick={() => void onOp({ op: "hide", groupId: group.id, hidden: !group.hidden })}
+        >
+          {group.hidden ? <EyeOffIcon /> : <EyeIcon />}
         </button>
       </header>
       {!single && (

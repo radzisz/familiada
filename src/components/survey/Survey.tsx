@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { Branding } from "@/lib/branding";
 import { postJson } from "@/lib/client/api";
 import { getDeviceId, readStorage, writeStorage } from "@/lib/client/storage";
 import { MAX_ANSWER_LENGTH, type Audience, type Role } from "@/lib/types";
@@ -20,6 +21,9 @@ interface Draft {
 }
 
 type Phase = "loading" | "role" | "questions" | "sending" | "error" | "done" | "already";
+
+/** Loga i nazwa wydarzenia tylko na pierwszej (wybór roli) i ostatniej stronie – przy pytaniach zabierałyby miejsce. */
+const FOOTER_PHASES: Phase[] = ["role", "done", "already"];
 
 const EMPTY: Draft = { role: null, answers: {}, index: 0 };
 const doneKey = (eventId: string) => `familiada:done:${eventId}`;
@@ -67,7 +71,7 @@ function useSurveyDraft(eventId: string) {
   return { phase, setPhase, draft, setDraft };
 }
 
-export function Survey({ eventId, questions }: { eventId: string; questions: SurveyQuestion[] }) {
+export function Survey({ eventId, questions, branding }: { eventId: string; questions: SurveyQuestion[]; branding: Branding }) {
   const { phase, setPhase, draft, setDraft } = useSurveyDraft(eventId);
   const [error, setError] = useState("");
   const mine = useMemo(
@@ -95,7 +99,7 @@ export function Survey({ eventId, questions }: { eventId: string; questions: Sur
     setDraft((d) => ({ ...d, answers: { ...d.answers, [id]: text.slice(0, MAX_ANSWER_LENGTH) } }));
 
   return (
-    <SurveyShell>
+    <SurveyShell branding={branding} footer={FOOTER_PHASES.includes(phase)}>
       <SurveyBody
         phase={phase} draft={draft} mine={mine} error={error}
         onRole={chooseRole} onGo={goTo} onAnswer={setAnswer} onRetry={() => void send()}

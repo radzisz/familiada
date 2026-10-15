@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { apiJson, postJson, type ApiResult } from "@/lib/client/api";
 import { useTwoStep } from "@/lib/client/useTwoStep";
-import { ShareDialog } from "./ShareDialog";
+import { ShareDialog, SURVEY_CLOSED_WARNING } from "./ShareDialog";
 
 export interface EventSummary {
   id: string;
@@ -54,7 +54,7 @@ export function EventItem({ event, onChange }: { event: EventSummary; onChange: 
             {event.submissions} ankiet · {event.questions} pytań · utworzona {formatDate(event.createdAt)}
           </span>
         </div>
-        <EventLinks id={event.id} />
+        <EventLinks id={event.id} surveyOpen={event.surveyOpen} />
       </div>
       <div className="ad-row">
         <button type="button" className="danger" disabled={busy} onClick={remove.click}>
@@ -66,12 +66,13 @@ export function EventItem({ event, onChange }: { event: EventSummary; onChange: 
   );
 }
 
-function EventLinks({ id }: { id: string }) {
+function EventLinks({ id, surveyOpen }: { id: string; surveyOpen: boolean }) {
   return (
     <div className="ad-row ad-event-links">
       <Link className="ad-link primary" href={`/admin/${id}`}>Otwórz panel</Link>
       <ShareDialog
         className="ad-link" label="Ankieta" path={`/ankieta/${id}`} screenPath={`/qr/${id}`}
+        warning={surveyOpen ? null : SURVEY_CLOSED_WARNING}
         hint="Dla uczestników: zeskanuj kod albo wyślij link. „Kod na cały ekran” pokażesz na rzutniku."
       />
       <a className="ad-link" href={`/tablica/${id}`} target="_blank" rel="noreferrer">Tablica ↗</a>
