@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { NONE, WRONG, type GameAction, type GameState, type Person } from "@/lib/game";
 import type { BoardQuestion } from "@/lib/types";
 
@@ -17,8 +18,14 @@ interface Props {
 
 /** Finał na pilocie: pytania jako kafelki z odpowiedziami do kliknięcia i „Błędna” – dla wybranej osoby. */
 export function FinalPicker({ state, questions, person, current, dispatch }: Props) {
+  const list = useRef<HTMLDivElement>(null);
+  // Po zaznaczeniu odpowiedzi bieżące pytanie przeskakuje na następne – przewijamy do niego kafelek.
+  useEffect(() => {
+    if (current === null) return;
+    list.current?.querySelector(`[data-question="${current}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [current]);
   return (
-    <div className="tb-fpick">
+    <div className="tb-fpick" ref={list}>
       <p className="tb-fpick-who">Odpowiada: <b>{PERSON_NAME[person]}</b></p>
       {questions.map((q, k) => <PickBox key={k} index={k} question={q} person={person} current={current === k} state={state} dispatch={dispatch} />)}
     </div>
@@ -38,12 +45,13 @@ interface BoxProps {
 function PickBox({ index, question, person, current, state, dispatch }: BoxProps) {
   if (!question) return <div className="tb-fbox"><p className="tb-fbox-q">{index + 1}. (nie wybrano pytania)</p></div>;
   const picked = state.final[person][index] ?? NONE;
+  const onBoard = index < state.finalRevealed[person];
   const blocked = person === "p2" ? (state.final.p1[index] ?? NONE) : NONE;
   const pick = (answer: number) =>
     dispatch({ type: "finalPick", person, question: index, answer: picked === answer ? NONE : answer });
   return (
-    <div className={`tb-fbox${picked === NONE ? "" : " done"}${current ? " current" : ""}`}>
-      <p className="tb-fbox-q"><b>{index + 1}.</b> {question.text}</p>
+    <div className={`tb-fbox${picked === NONE ? "" : " done"}${current ? " current" : ""}`} data-question={index}>
+      <p className="tb-fbox-q"><b>{index + 1}.</b> {question.text}{onBoard && <span className="tb-fbox-shown"> · na tablicy</span>}</p>
       <div className="tb-fbox-answers">
         {question.answers.map((a, i) => (
           <button

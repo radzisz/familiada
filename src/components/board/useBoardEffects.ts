@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { introFor, type IntroKind } from "@/lib/boardIntro";
-import { NONE, type GameState, type Team } from "@/lib/game";
+import type { GameState, Team } from "@/lib/game";
 import { introMs, MAX_TURNIPS } from "./RoundIntro";
 import type { Sound } from "./sound";
 
@@ -61,10 +61,9 @@ export function useBoardEffects(state: GameState | null, sound: Sound): BoardFx 
     const shown = (g: GameState) => [...g.revealed, ...g.uncovered];
     const fresh = shown(state).filter((i) => !shown(before).includes(i));
     const scored = state.scoreW !== before.scoreW || state.scoreH !== before.scoreH;
-    const picked = (["p1", "p2"] as const).some((p) =>
-      state.final[p].some((a, k) => a !== NONE && a !== before.final[p][k]),
-    );
-    if (fresh.length > 0 || scored || picked) sound.ding();
+    // Finał: dzwonek przy odsłonięciu odpowiedzi na tablicy – nie przy zaznaczaniu na pilocie (to by zdradziło wynik).
+    const finalShown = (["p1", "p2"] as const).some((p) => state.finalRevealed[p] > before.finalRevealed[p]);
+    if (fresh.length > 0 || scored || finalShown) sound.ding();
     if (fresh.length === 1) setFx((f) => ({ ...f, flipped: fresh[0]! }));
     if (scored) setFx((f) => ({ ...f, gain: scoreGain(before, state, (f.gain?.key ?? 0) + 1) ?? f.gain }));
     if (state.strikes.w + state.strikes.h > before.strikes.w + before.strikes.h) {

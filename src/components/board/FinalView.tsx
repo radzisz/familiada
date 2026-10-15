@@ -1,9 +1,9 @@
 "use client";
 
-import { FINAL_TARGET, finalNextHint, finalPerson, finalQuestionOnBoard, finalTotal, NONE, WRONG, type GameAction, type GameState, type Person } from "@/lib/game";
+import { FINAL_TARGET, finalNextHint, finalPerson, finalQuestionOnBoard, shownFinalTotal, NONE, WRONG, type GameAction, type GameState, type Person } from "@/lib/game";
 import type { Board, BoardQuestion } from "@/lib/types";
 import { FinalPicker } from "./FinalPicker";
-import { UndoButton } from "./GameView";
+import { LitText, NextHint, UndoButton } from "./GameView";
 import { LedCounter } from "./LedCounter";
 import type { Sound } from "./sound";
 import { useCountdown } from "./useCountdown";
@@ -24,7 +24,8 @@ const TIMER_IDLE = 20;
 /** Finał: na tablicy sam podgląd wyników, na pilocie wybór odpowiedzi; stoper i przyciski w panelu prowadzącego. */
 export function FinalView({ state, board, hideHost, pilot, dispatch, sound, onTogglePanel }: Props) {
   const finals = board.final.map((q) => q?.answers ?? []);
-  const total = finalTotal(state, finals);
+  // Na tablicy i pilocie suma rośnie dopiero przy odsłanianiu odpowiedzi.
+  const total = shownFinalTotal(state, finals);
   const left = useCountdown(state.timerEndsAt, sound.buzz);
   const person = finalPerson(state);
   // Licznik odświeża widok co sekundę, więc pytanie znika z tablicy, gdy skończy się czas.
@@ -70,11 +71,11 @@ function FinalPanel({ state, hint, dispatch, onHide }: PanelProps) {
             {hint && (
               <button type="button" className="tb-next primary" onClick={() => dispatch({ type: "finalNext", now: Date.now() })}>
                 Dalej →
-                <small>{hint}</small>
               </button>
             )}
             {onHide && <button type="button" onClick={onHide}>Ukryj panel</button>}
           </div>
+          <NextHint text={hint} />
         </section>
       </div>
     </div>
@@ -88,11 +89,22 @@ function FinalColumn(p: { person: Person; active: boolean; state: GameState; que
     <div className={`tb-fcol${p.active ? " active" : ""}`}>
       <h3>{person === "p1" ? "Osoba 1" : "Osoba 2"}</h3>
       {questions.map((q, k) => {
+        // Odpowiedź zaznaczona na pilocie jest zakryta, dopóki prowadzący nie odsłoni jej „Dalej” (po kolei).
+        if (k >= state.finalRevealed[person]) {
+          return (
+            <div key={k} className="tb-frow covered" aria-label="Odpowiedź zakryta">
+              <span className="tb-fans">{"•".repeat(12)}</span>
+              <div className="tb-fp">--</div>
+            </div>
+          );
+        }
         const picked = state.final[person][k] ?? NONE;
         const answer = q && picked >= 0 ? q.answers[picked] : undefined;
         return (
           <div key={k} className="tb-frow">
-            <span className={`tb-fans${picked === WRONG ? " wrong" : ""}`}>{answer ? answer.label : picked === WRONG ? "✗" : "—"}</span>
+            <span className={`tb-fans${picked === WRONG ? " wrong" : ""}`}>
+              {answer ? <LitText text={answer.label} /> : picked === WRONG ? "✗" : "—"}
+            </span>
             <div className="tb-fp">{answer ? answer.points : 0}</div>
           </div>
         );

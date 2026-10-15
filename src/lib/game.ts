@@ -45,6 +45,8 @@ export interface GameState {
   finalStep: number;
   /** Pytanie finału pokazane teraz na tablicy (NONE = żadne). */
   finalQuestion: number;
+  /** Ile odpowiedzi każdej osoby jest już odsłoniętych na tablicy (zaznaczone na pilocie, ale nie odsłonięte – ukryte). */
+  finalRevealed: Record<Person, number>;
   /** Poprzednie stany (najstarszy pierwszy) – „Wstecz” cofa ostatnią akcję. */
   history: GameSnapshot[];
 }
@@ -90,6 +92,7 @@ export function initialGameState(): GameState {
     timerEndsAt: null,
     finalStep: 0,
     finalQuestion: NONE,
+    finalRevealed: { p1: 0, p2: 0 },
     history: [],
   };
 }
@@ -174,15 +177,19 @@ function award(state: GameState, team: Team, answers: BoardAnswer[]): GameState 
 
 /** Czas na odpowiedzi w finale (sekundy): osoba 1 i osoba 2. */
 export const FINAL_SECONDS: Record<Person, number> = { p1: 20, p2: 25 };
-/** Kroki finału: 0 osoba 1 gotowa, 1 osoba 1 odpowiada (stoper), 2 osoba 2 gotowa, 3 osoba 2 odpowiada, 4 koniec. */
-export const FINAL_DONE = 4;
+/**
+ * Kroki finału: 0 osoba 1 gotowa, 1 osoba 1 odpowiada (stoper), 2 odsłanianie odpowiedzi osoby 1,
+ * 3 osoba 2 gotowa, 4 osoba 2 odpowiada, 5 odsłanianie odpowiedzi osoby 2, 6 koniec.
+ */
+export const FINAL_DONE = 6;
 
 /** Kto teraz odpowiada w finale (wynika z kroku). */
 export function finalPerson(state: GameState): Person {
-  return state.finalStep < 2 ? "p1" : "p2";
+  return state.finalStep < 3 ? "p1" : "p2";
 }
 
-const answering = (state: GameState) => state.finalStep === 1 || state.finalStep === 3;
+const answering = (state: GameState) => state.finalStep === 1 || state.finalStep === 4;
+const revealing = (state: GameState) => state.finalStep === 2 || state.finalStep === 5;
 const timeIsUp = (state: GameState, now: number) => state.timerEndsAt === null || now >= state.timerEndsAt;
 
 /** Które pytanie finału widać teraz na tablicy (null = żadne: przed startem albo po upływie czasu). */
@@ -196,27 +203,39 @@ export function finalNextHint(state: GameState, now: number): string | null {
   if (state.view === "thanks") return null;
   if (state.finalStep >= FINAL_DONE) return "podziękowanie";
   if (state.finalStep === 0) return `start ${FINAL_SECONDS.p1} s · pytanie 1`;
-  if (state.finalStep === 2) return `start ${FINAL_SECONDS.p2} s · pytanie 1`;
-  if (!answering(state)) return null;
+  if (state.finalStep === 3) return `start ${FINAL_SECONDS.p2} s · pytanie 1`;
+  if (revealing(state)) {
+    const shown = state.finalRevealed[finalPerson(state)];
+    if (shown < FINAL_COUNT) return `odkryj ${shown + 1}`;
+    return state.finalStep === 2 ? "osoba 2" : "koniec finału";
+  }
   const last = state.finalQuestion >= FINAL_COUNT - 1 || timeIsUp(state, now);
-  if (last) return state.finalStep === 1 ? "osoba 2" : "koniec finału";
-  return `pytanie ${state.finalQuestion + 2}`;
+  return last ? "odkrywanie odpowiedzi" : `pytanie ${state.finalQuestion + 2}`;
 }
 
 /**
- * „Dalej” w finale: start stopera z pierwszym pytaniem na tablicy, potem kolejne pytania;
- * po ostatnim pytaniu albo po upływie czasu – następna osoba (pytania znikają) i na końcu koniec finału.
+ * „Dalej” w finale: start stopera z pierwszym pytaniem na tablicy, potem kolejne pytania; po ostatnim pytaniu
+ * albo po upływie czasu – odsłanianie odpowiedzi tej osoby po jednej (razem z nią), potem następna osoba i koniec.
  */
 function finalNext(state: GameState, now: number): GameState {
   if (state.view === "thanks") return state;
   // Po zakończonym finale „Dalej” pokazuje ekran końcowy z podziękowaniem.
   if (state.finalStep >= FINAL_DONE) return { ...state, view: "thanks" };
-  if (state.finalStep === 0 || state.finalStep === 2) {
+  if (state.finalStep === 0 || state.finalStep === 3) {
     const seconds = state.finalStep === 0 ? FINAL_SECONDS.p1 : FINAL_SECONDS.p2;
     return { ...state, finalStep: state.finalStep + 1, finalQuestion: 0, timerEndsAt: now + seconds * 1000 };
   }
+  if (revealing(state)) return revealNextFinal(state);
   if (state.finalQuestion < FINAL_COUNT - 1 && !timeIsUp(state, now)) return { ...state, finalQuestion: state.finalQuestion + 1 };
   return { ...state, finalStep: state.finalStep + 1, finalQuestion: NONE, timerEndsAt: null };
+}
+
+/** Odsłania na tablicy kolejną odpowiedź osoby (z punktami); po ostatniej przechodzi do następnego kroku. */
+function revealNextFinal(state: GameState): GameState {
+  const person = finalPerson(state);
+  const shown = state.finalRevealed[person];
+  if (shown >= FINAL_COUNT) return { ...state, finalStep: state.finalStep + 1 };
+  return { ...state, finalRevealed: { ...state.finalRevealed, [person]: shown + 1 } };
 }
 
 /** Błąd (X) dla drużyny, która teraz odpowiada (najwyżej MAX_STRIKES); bez wybranej drużyny nic się nie dzieje. */
@@ -238,7 +257,14 @@ function finalPick(state: GameState, person: Person, question: number, answer: n
     ? other.map((v, i) => (i === question ? NONE : v))
     : other;
   const final = person === "p1" ? { p1: column, p2: cleared } : { p1: cleared, p2: column };
-  return { ...state, final };
+  return { ...state, final, finalQuestion: questionAfterPick(state, person, question, answer) };
+}
+
+/** Odpowiedź na bieżące pytanie (w trakcie odpowiadania) przechodzi do następnego – na tablicy i na pilocie. */
+function questionAfterPick(state: GameState, person: Person, question: number, answer: number): number {
+  const current = answering(state) && person === finalPerson(state) && question === state.finalQuestion;
+  if (!current || answer === NONE || question >= FINAL_COUNT - 1) return state.finalQuestion;
+  return question + 1;
 }
 
 function applyAction(state: GameState, action: GameAction): GameState {
@@ -255,7 +281,7 @@ function applyAction(state: GameState, action: GameAction): GameState {
     case "start": return state.started ? state : { ...state, started: true };
     case "reset": return { ...initialGameState(), view: state.view, final: state.final };
     case "finalPick": return finalPick(state, action.person, action.question, action.answer);
-    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0, finalQuestion: NONE };
+    case "finalClear": return { ...state, final: initialGameState().final, timerEndsAt: null, finalStep: 0, finalQuestion: NONE, finalRevealed: { p1: 0, p2: 0 } };
     case "finalNext": return finalNext(state, action.now);
     case "timerStart": return { ...state, timerEndsAt: action.now + action.seconds * 1000 };
     case "timerStop": return { ...state, timerEndsAt: null };
@@ -298,6 +324,19 @@ export function finalTotal(state: GameState, finalAnswers: BoardAnswer[][]): num
   return pts(state.final.p1) + pts(state.final.p2);
 }
 
+/** Suma finału widoczna na tablicy: tylko odpowiedzi już odsłonięte (po kolei, od pierwszej). */
+export function shownFinalTotal(state: GameState, finalAnswers: BoardAnswer[][]): number {
+  const visible = (person: Person) => state.final[person].slice(0, state.finalRevealed[person]);
+  const pts = (col: number[]) => col.reduce((sum, a, k) => sum + (a < 0 ? 0 : (finalAnswers[k]?.[a]?.points ?? 0)), 0);
+  return pts(visible("p1")) + pts(visible("p2"));
+}
+
+/** Liczba odsłoniętych odpowiedzi osoby z zapisu w bazie (0–FINAL_COUNT, inaczej 0). */
+function revealedCount(raw: unknown, person: Person): number {
+  const v = raw && typeof raw === "object" ? (raw as Record<string, unknown>)[person] : undefined;
+  return typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= FINAL_COUNT ? v : 0;
+}
+
 /** Liczba błędów drużyny z zapisu w bazie (stary zapis – jedna liczba – traktujemy jak brak błędów). */
 function strikeCount(raw: unknown, team: Team): number {
   const v = raw && typeof raw === "object" ? (raw as Record<string, unknown>)[team] : undefined;
@@ -334,6 +373,7 @@ export function parseGameState(raw: unknown): GameState {
     timerEndsAt: Number.isFinite(r.timerEndsAt) ? r.timerEndsAt! : null,
     finalStep: Number.isInteger(r.finalStep) && r.finalStep! >= 0 && r.finalStep! <= FINAL_DONE ? r.finalStep! : 0,
     finalQuestion: Number.isInteger(r.finalQuestion) && r.finalQuestion! >= 0 && r.finalQuestion! < FINAL_COUNT ? r.finalQuestion! : NONE,
+    finalRevealed: { p1: revealedCount(r.finalRevealed, "p1"), p2: revealedCount(r.finalRevealed, "p2") },
     history: parseHistory(r.history),
   };
 }

@@ -282,10 +282,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-fcol .tb-frow { padding: 8px 4px; border-bottom: 1px solid #1d2440; }
 .tb-fcol .tb-frow:last-child { border-bottom: 0; }
 /* Finał na pilocie: nawigacja wyraźnie oddzielona od pytań – przyklejona do dołu ekranu, z odstępem i cieniem */
-.tb-fpick + .tb-panel {
-  position: sticky; bottom: 0; z-index: 3; margin-top: 18px;
-  border: 2px solid color-mix(in srgb, var(--led) 45%, var(--line)); box-shadow: 0 -10px 24px rgba(0, 0, 0, .55);
-}
+
 /* Finał: kto teraz odpowiada (kolumna na tablicy, napis na pilocie) */
 .tb-fcol.active { border-color: var(--led); box-shadow: 0 0 18px color-mix(in srgb, var(--led) 35%, transparent); }
 .tb-fpick-who { margin: 0; font-size: 18px; color: var(--muted); }
@@ -315,8 +312,40 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb.pilot button.tb-team { padding: 2px 10px; border-radius: 10px; min-height: 48px; }
 
 /* Ekran startowy: duży tytuł, loga organizatorów i (dla prowadzącego) przycisk „Start”. */
-.tb-start { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(20px, 5vh, 56px); padding: 16px; text-align: center; background: rgba(5, 7, 13, .86); backdrop-filter: blur(3px); }
+.tb-start { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(20px, 5vh, 56px); padding: 16px; text-align: center; background: rgba(5, 7, 13, .55); backdrop-filter: blur(1px); }
 .tb-start-title { margin: 0; font-family: var(--led-font); color: var(--led); font-weight: 400; line-height: 1.05; font-size: clamp(48px, 10vw, 150px); letter-spacing: 4px; text-shadow: 0 0 28px color-mix(in srgb, var(--led) 60%, transparent); }
 .tb-start-logos .tb-thanks-disc { width: clamp(100px, 15vw, 190px); }
 .tb .tb-start-btn { font-size: clamp(22px, 3vw, 32px); padding: 14px 40px; }
 .tb.pilot .tb-start-title { font-size: 40px; }
+/* Finał: zaznaczona, ale jeszcze nieodsłonięta odpowiedź – zakryta jak na tablicy w rundach */
+.tb-frow.covered .tb-fans, .tb-frow.covered .tb-fp { color: var(--led-dim); letter-spacing: 3px; }
+.tb-fbox-shown { color: var(--muted); font-weight: 400; font-size: .8em; }
+/* Pilot: „Błąd” jako ostatnia pozycja listy odpowiedzi; pasek nawigacji w jednej linii */
+.tb .tb-key button.tb-key-strike { color: #ff8a80; border-color: color-mix(in srgb, var(--bad) 60%, transparent); background: color-mix(in srgb, var(--bad) 10%, var(--panel)); }
+.tb .tb-key button.tb-key-strike .p { color: #ff8a80; font-size: 16px; }
+.tb.pilot .tb-nav-row { flex-wrap: nowrap; }
+.tb.pilot .tb-nav-row button { white-space: nowrap; }
+
+/* Panel sterowania przypięty do dołu ekranu i wyraźnie odcięty od tła (jaśniejsze tło, ramka, cień). */
+.tb .tb-panel {
+  position: sticky; bottom: 0; z-index: 10; margin-top: 14px;
+  background: #1c2440; border: 2px solid color-mix(in srgb, var(--led) 40%, var(--line));
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, .65);
+}
+.tb .tb-panel .tb-sec { border-color: #34406a; }
+/* Opis „Dalej” pod przyciskami */
+.tb-next-hint { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.tb-next-hint b { color: var(--led); font-weight: 600; }
+/* Pilot (telefon): panel finału na całą szerokość ekranu, przyciski rozłożone równo w jednej linii */
+.tb.pilot .tb-panel.fit { width: auto; }
+.tb.pilot .tb-panel.fit .tb-sec { flex: 1 1 auto; max-width: none; }
+.tb.pilot .tb-panel.fit .tb-row > button { flex: 1 1 0; }
+/*
+ * Panel sterowania zawsze na dole strony: przy krótkiej treści dosunięty do dołu ekranu (margin-top: auto
+ * w kolumnie na całą wysokość), przy długiej – przyklejony do dołu podczas przewijania (sticky).
+ */
+.tb:has(.tb-panel) { display: flex; flex-direction: column; }
+.tb:has(.tb-panel) > section:has(> .tb-panel) { flex: 1 1 auto; display: flex; flex-direction: column; }
+.tb > section > .tb-panel { margin-top: auto; }
+.tb > section > :has(+ .tb-panel) { margin-bottom: 14px; }
+.tb.pilot > section > .tb-panel { margin-top: auto; }

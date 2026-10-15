@@ -124,7 +124,7 @@ function TeamScore(p: TeamScoreProps) {
 }
 
 /** Tekst odpowiedzi, którego litery zapalają się kolejno (opóźnienie rośnie z pozycją litery). */
-function LitText({ text }: { text: string }) {
+export function LitText({ text }: { text: string }) {
   return (
     <>
       <span className="tb-sr">{text}</span>
@@ -181,6 +181,15 @@ function AnswerKey(p: { question: BoardQuestion | null; state: GameState; dispat
             </li>
           );
         })}
+        <li>
+          <button
+            type="button" className="tb-key-strike" disabled={noTeam || p.state.strikes[p.state.turn ?? "w"] >= MAX_STRIKES}
+            onClick={() => p.dispatch({ type: "strike" })}
+          >
+            <span>✗</span><span className="a">Błąd</span>
+            <span className="p">{p.state.turn ? `${p.state.strikes[p.state.turn]}/${MAX_STRIKES}` : ""}</span><span className="s" />
+          </button>
+        </li>
       </ol>
     </div>
   );
@@ -222,28 +231,21 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
   return (
     <div className="tb-panel">
       <div className="tb-sections">
-        <section className="tb-sec" aria-label="Odpowiedzi">
-          <h3>Odpowiedzi</h3>
-          <div className="tb-row">
-            <button
-              type="button" className="soft bad" disabled={state.turn === null}
-              title={state.turn === null ? "Najpierw wybierz drużynę, która odpowiada" : "Błąd drużyny, która odpowiada"}
-              onClick={() => dispatch({ type: "strike" })}
-            >X (błąd)</button>
-            <button type="button" title="Odsłania od dołu kolejną nieodkrytą odpowiedź – bez punktów" onClick={() => dispatch({ type: "uncoverNext", slotCount: answers.length })}>Pokaż kolejną</button>
-          </div>
-        </section>
         <section className="tb-sec" aria-label="Nawigacja">
           <h3>Nawigacja</h3>
-          <div className="tb-row">
+          {/* Jedna linia: na pilocie błąd jest ostatnią pozycją listy odpowiedzi, na tablicy zostaje tu. */}
+          <div className="tb-row tb-nav-row">
             <UndoButton state={state} dispatch={dispatch} />
+            {!pilot && <StrikeButton state={state} dispatch={dispatch} />}
+            <button type="button" title="Odsłania od dołu kolejną nieodkrytą odpowiedź – bez punktów" onClick={() => dispatch({ type: "uncoverNext", slotCount: answers.length })}>Pokaż</button>
             <NextButton state={state} highlight={awarded} disabled={needTurn && potValue(state, answers) > 0} onNext={onNext} />
             {!pilot && <button type="button" onClick={onTogglePanel}>Ukryj panel</button>}
           </div>
+          <NextHint text={nextHintText(state)} />
         </section>
       </div>
       <p className="tb-hint">
-        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Kliknij pole ŻONY albo MĘŻOWIE u góry – ta drużyna odpowiada i do niej trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Pokaż kolejną” odsłania od dołu nieodkryte odpowiedzi, bez punktów."}
+        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Kliknij pole ŻONY albo MĘŻOWIE u góry – ta drużyna odpowiada i do niej trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Pokaż” odsłania od dołu nieodkryte odpowiedzi, bez punktów."}
       </p>
       {!pilot && (
         <p className="tb-hint">
@@ -252,6 +254,17 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
         </p>
       )}
     </div>
+  );
+}
+
+/** „X (błąd)” dla drużyny, która odpowiada; bez wybranej drużyny nieaktywny. */
+function StrikeButton({ state, dispatch }: { state: GameState; dispatch: (a: GameAction) => void }) {
+  return (
+    <button
+      type="button" className="soft bad" disabled={state.turn === null}
+      title={state.turn === null ? "Najpierw wybierz drużynę, która odpowiada" : "Błąd drużyny, która odpowiada"}
+      onClick={() => dispatch({ type: "strike" })}
+    >X (błąd)</button>
   );
 }
 
@@ -268,13 +281,24 @@ export function UndoButton({ state, dispatch }: { state: GameState; dispatch: (a
 }
 
 /** „Dalej →” z dopiskiem pod spodem, co się stanie: pokaż pytanie / następne pytanie / finał. */
+/** Co zrobi „Dalej” w rundach (null = nic). */
+function nextHintText(state: GameState): string | null {
+  const step = nextStep(state);
+  return step === null ? null : NEXT_HINT[step];
+}
+
+/** Opis „Dalej” pod przyciskami (a nie w przycisku – ten zostaje mały). */
+export function NextHint({ text }: { text: string | null }) {
+  if (!text) return null;
+  return <p className="tb-next-hint">Dalej: <b>{text}</b></p>;
+}
+
 function NextButton(p: { state: GameState; highlight: boolean; disabled: boolean; onNext: () => void }) {
   const step = nextStep(p.state);
   if (step === null) return null;
   return (
     <button type="button" className={`tb-next${p.highlight || step === "question" ? " primary" : ""}`} disabled={p.disabled} onClick={p.onNext}>
       Dalej →
-      <small>{NEXT_HINT[step]}</small>
     </button>
   );
 }
