@@ -166,7 +166,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 @media (max-width: 720px) { .tb .tb-key button { grid-template-columns: 1.6em 1fr 2.6em 20px; font-size: 18px; } }
 
 /* Panel prowadzącego: trzy osobne sekcje – pula, odpowiedzi, nawigacja. */
-.tb-sections { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: stretch; }
+.tb-sections { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 28px; align-items: stretch; }
 /* Na tablecie / laptopie sekcja nie rozciąga się na całą szerokość – przyciski zostają blisko siebie. */
 .tb-sec { flex: 0 1 auto; max-width: 100%; }
 .tb-sec { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; }
@@ -186,7 +186,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb.pilot .tb-team .name { font-size: 14px; }
 .tb.pilot .tb-team .pts { font-size: 30px; }
 .tb.pilot .tb-key { padding: 8px; }
-.tb.pilot .tb-key-q { font-size: 17px; margin-bottom: 6px; }
+.tb.pilot .tb-key-q { font-size: 21px; line-height: 1.25; margin-bottom: 8px; }
 .tb.pilot .tb-key ol { gap: 8px; }
 /* Pilot na telefonie: odpowiedzi to duże cele dotyku (min. 52 px) z odstępami, żeby nie trafić w sąsiednią. */
 .tb.pilot .tb-key button { min-height: 52px; padding: 10px 12px; font-size: 18px; }
@@ -268,7 +268,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-fpick { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 .tb-fbox { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; background: var(--panel); }
 .tb-fbox.done { border-color: color-mix(in srgb, var(--led) 50%, var(--line)); }
-.tb-fbox-q { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
+.tb-fbox-q { margin: 0 0 8px; font-weight: 700; font-size: 19px; line-height: 1.25; }
 .tb-fbox-q b { color: var(--led); }
 .tb-fbox-answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .tb .tb-fbox-answers button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; min-height: 52px; padding: 10px 12px; font-size: 17px; }
@@ -297,7 +297,7 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 /* Finał: bieżące pytanie na tablicy (znika po upływie czasu) i podświetlony kafelek na pilocie */
 .tb-fquestion { margin: 12px 0 0; padding: 10px 16px; border: 2px solid #1d2440; border-radius: 14px; background: var(--board); font-family: var(--led-font); color: var(--led); font-size: clamp(26px, 3.6vw, 52px); line-height: 1.1; text-align: center; text-wrap: balance; }
 .tb-fquestion span { opacity: .7; }
-.tb.pilot .tb-fquestion { font-size: 20px; }
+.tb.pilot .tb-fquestion { font-size: 23px; }
 .tb-fbox.current { border-color: var(--led); box-shadow: 0 0 0 1px var(--led) inset, 0 0 16px color-mix(in srgb, var(--led) 35%, transparent); }
 
 /* Ekran końcowy: „Dziękujemy!” i loga organizatorów na białych tarczach (loga są ciemne, tło tablicy też). */
