@@ -187,8 +187,9 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb.pilot .tb-team .pts { font-size: 30px; }
 .tb.pilot .tb-key { padding: 8px; }
 .tb.pilot .tb-key-q { font-size: 17px; margin-bottom: 6px; }
-.tb.pilot .tb-key ol { gap: 4px; }
-.tb.pilot .tb-key button { padding: 5px 10px; font-size: 16px; }
+.tb.pilot .tb-key ol { gap: 8px; }
+/* Pilot na telefonie: odpowiedzi to duże cele dotyku (min. 52 px) z odstępami, żeby nie trafić w sąsiednią. */
+.tb.pilot .tb-key button { min-height: 52px; padding: 10px 12px; font-size: 18px; }
 .tb.pilot .tb-key .p { font-size: 20px; }
 .tb.pilot .tb-panel { margin-top: 6px; padding: 6px; gap: 6px; }
 .tb.pilot .tb-sections { gap: 8px 20px; }
@@ -269,8 +270,8 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-fbox.done { border-color: color-mix(in srgb, var(--led) 50%, var(--line)); }
 .tb-fbox-q { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
 .tb-fbox-q b { color: var(--led); }
-.tb-fbox-answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
-.tb .tb-fbox-answers button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; padding: 8px 10px; font-size: 16px; }
+.tb-fbox-answers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.tb .tb-fbox-answers button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; min-height: 52px; padding: 10px 12px; font-size: 17px; }
 .tb-fbox-answers .a { overflow-wrap: anywhere; }
 .tb-fbox-answers .p { font-family: var(--led-font); color: var(--led); font-size: 20px; }
 .tb .tb-fbox-answers button.on { background: color-mix(in srgb, var(--led) 25%, var(--panel)); border-color: var(--led); box-shadow: 0 0 0 1px var(--led) inset; }
@@ -307,3 +308,8 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-thanks-disc { display: flex; width: clamp(140px, 22vw, 280px); aspect-ratio: 1; border-radius: 50%; background: #fff; padding: 6%; box-shadow: 0 0 32px color-mix(in srgb, var(--led) 35%, transparent); }
 .tb-thanks-disc img { width: 100%; height: 100%; object-fit: contain; }
 .tb-thanks-name { font-size: clamp(16px, 2vw, 26px); font-weight: 700; color: var(--text); }
+/* Pole drużyny jako przycisk wyboru, kto odpowiada (przy panelu prowadzącego): wygląda jak zwykłe pole wyniku. */
+.tb button.tb-team { width: 100%; border-radius: 14px; padding: 8px 14px; text-align: left; color: var(--text); font: inherit; cursor: pointer; }
+.tb button.tb-team.w:hover:not(:disabled) { border-color: var(--wife); }
+.tb button.tb-team.h:hover:not(:disabled) { border-color: var(--husband); }
+.tb.pilot button.tb-team { padding: 2px 10px; border-radius: 10px; min-height: 48px; }

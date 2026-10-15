@@ -1,6 +1,6 @@
 "use client";
 
-import { isShown, MAX_STRIKES, multiplier, nextStep, potValue, type GameAction, type GameState, type NextStep } from "@/lib/game";
+import { isShown, MAX_STRIKES, multiplier, nextStep, potValue, type GameAction, type GameState, type NextStep, type Team } from "@/lib/game";
 import type { Board, BoardAnswer, BoardQuestion } from "@/lib/types";
 import { LedCounter } from "./LedCounter";
 import { useCountdown } from "./useCountdown";
@@ -30,16 +30,18 @@ export function GameView({ state, board, fx, sound, hideHost, pilot, dispatch, o
   const m = multiplier(state.round);
   // Po pokazaniu pytania nad polem odpowiedzi odliczamy kilka sekund, na końcu „piii”.
   const countdown = useCountdown(state.questionEndsAt, sound.whistle);
+  // Przy panelu prowadzącego pola drużyn służą do wyboru, kto odpowiada; na samym podglądzie są tylko wynikiem.
+  const selectTeam = hideHost ? null : (team: Team) => dispatch({ type: "setTurn", team });
   return (
     <section>
       <div className="tb-scores">
-        <TeamScore team="w" name="ŻONY" active={state.turn === "w"} score={state.scoreW} gain={fx.gain} onStep={sound.tick} />
+        <TeamScore team="w" name="ŻONY" active={state.turn === "w"} score={state.scoreW} gain={fx.gain} onStep={sound.tick} onSelect={selectTeam} />
         <div className="tb-pot">
           <div className="lbl">Pula ×{m}{state.turn ? ` · ${TEAM_NAME[state.turn]}` : ""}</div>
           {/* Po przyznaniu pula „przechodzi” do drużyny – licznik schodzi do zera. */}
           <LedCounter className="val" value={state.awarded.includes(state.round) ? 0 : potValue(state, answers) * m} onStep={sound.tick} />
         </div>
-        <TeamScore team="h" name="MĘŻOWIE" active={state.turn === "h"} score={state.scoreH} gain={fx.gain} onStep={sound.tick} />
+        <TeamScore team="h" name="MĘŻOWIE" active={state.turn === "h"} score={state.scoreH} gain={fx.gain} onStep={sound.tick} onSelect={selectTeam} />
       </div>
       <div className="tb-board">
         <StrikeColumn team="w" count={state.strikes.w} />
@@ -90,15 +92,34 @@ function questionText(question: BoardQuestion | null, shown: boolean): string {
 const NEXT_HINT: Record<NextStep, string> = { question: "pokaż pytanie", round: "następne pytanie", final: "finał" };
 
 /** Wynik drużyny; drużyna, która teraz odpowiada (ma pulę), jest podświetlona. */
-function TeamScore(p: { team: "w" | "h"; name: string; active: boolean; score: number; gain: ScoreGain | null; onStep: () => void }) {
+interface TeamScoreProps {
+  team: Team;
+  name: string;
+  active: boolean;
+  score: number;
+  gain: ScoreGain | null;
+  onStep: () => void;
+  /** Pilot: kliknięcie pola drużyny wybiera ją jako odpowiadającą (null = pole tylko do podglądu). */
+  onSelect: ((team: Team) => void) | null;
+}
+
+function TeamScore(p: TeamScoreProps) {
   const gain = p.gain?.team === p.team ? p.gain : null;
-  return (
-    <div className={`tb-team ${p.team}${p.active ? " active" : ""}`}>
+  const content = (
+    <>
       <span className="name">{p.name}</span>
       <LedCounter className="pts" value={p.score} onStep={p.onStep} />
       {gain && <span key={gain.key} className="tb-flash" aria-hidden="true" />}
       {gain && <span key={`+${gain.key}`} className="tb-gain" aria-hidden="true">+{gain.amount}</span>}
-    </div>
+    </>
+  );
+  const className = `tb-team ${p.team}${p.active ? " active" : ""}`;
+  if (!p.onSelect) return <div className={className}>{content}</div>;
+  const select = p.onSelect;
+  return (
+    <button type="button" className={className} aria-pressed={p.active} title={`Odpowiada: ${p.name}`} onClick={() => select(p.team)}>
+      {content}
+    </button>
   );
 }
 
@@ -201,10 +222,6 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
   return (
     <div className="tb-panel">
       <div className="tb-sections">
-        <section className="tb-sec" aria-label="Pula">
-          <h3>Pula</h3>
-          <TurnSwitch dispatch={dispatch} />
-        </section>
         <section className="tb-sec" aria-label="Odpowiedzi">
           <h3>Odpowiedzi</h3>
           <div className="tb-row">
@@ -226,7 +243,7 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
         </section>
       </div>
       <p className="tb-hint">
-        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Wybierz, kto odpowiada – do tej drużyny trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Pokaż kolejną” odsłania od dołu nieodkryte odpowiedzi, bez punktów."}
+        {awarded ? "Pula tej rundy przyznana." : needTurn ? "Kliknij pole ŻONY albo MĘŻOWIE u góry – ta drużyna odpowiada i do niej trafi pula." : "Pula trafi do zaznaczonej drużyny przy „Dalej”. „Pokaż kolejną” odsłania od dołu nieodkryte odpowiedzi, bez punktów."}
       </p>
       {!pilot && (
         <p className="tb-hint">
@@ -234,16 +251,6 @@ function GamePanel({ state, answers, pilot, dispatch, onNext, onTogglePanel }: P
           {" "}<kbd>H</kbd> ukryj lub pokaż panel. Odpowiedź możesz też kliknąć na tablicy.
         </p>
       )}
-    </div>
-  );
-}
-
-/** „Zmiana puli”: która drużyna teraz odpowiada (i dostanie pulę). Wybraną widać na tablicy (podświetlona ramka). */
-function TurnSwitch({ dispatch }: { dispatch: (a: GameAction) => void }) {
-  return (
-    <div className="tb-row" role="group" aria-label="Kto odpowiada – czyja pula">
-      <button type="button" className="soft wife" onClick={() => dispatch({ type: "setTurn", team: "w" })}>Żony</button>
-      <button type="button" className="soft husband" onClick={() => dispatch({ type: "setTurn", team: "h" })}>Mężowie</button>
     </div>
   );
 }
