@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { introFor, type IntroKind } from "@/lib/boardIntro";
 import { NONE, type GameState, type Team } from "@/lib/game";
 import { introMs, MAX_TURNIPS } from "./RoundIntro";
 import type { Sound } from "./sound";
@@ -19,11 +20,9 @@ export interface BoardIntro {
   key: number;
 }
 
-/** Plansza przy wejściu do nowej rundy (tyle rzepek, ile numer rundy) albo do finału; null = bez planszy. */
-function introFor(before: GameState, state: GameState): Omit<BoardIntro, "key"> | null {
-  if (state.view === "final" && before.view !== "final") return { count: MAX_TURNIPS, label: "FINAŁ" };
-  if (state.view === "game" && state.round !== before.round) return { count: state.round, label: `RUNDA ${state.round}` };
-  return null;
+/** Liczba rzepek i napis planszy przejścia (sama decyzja, kiedy ją pokazać, jest w lib/boardIntro). */
+function introContent(kind: IntroKind): Omit<BoardIntro, "key"> {
+  return kind.kind === "final" ? { count: MAX_TURNIPS, label: "FINAŁ" } : { count: kind.round, label: `RUNDA ${kind.round}` };
 }
 
 export interface BoardFx {
@@ -73,8 +72,8 @@ export function useBoardEffects(state: GameState | null, sound: Sound): BoardFx 
       setFx((f) => ({ ...f, bigX: f.bigX + 1 }));
     }
     if (state.timerEndsAt !== null && state.timerEndsAt !== before.timerEndsAt) sound.beep();
-    const intro = introFor(before, state);
-    if (intro) setFx((f) => ({ ...f, intro: { ...intro, key: (f.intro?.key ?? 0) + 1 } }));
+    const kind = introFor(before, state);
+    if (kind) setFx((f) => ({ ...f, intro: { ...introContent(kind), key: (f.intro?.key ?? 0) + 1 } }));
   }, [state, sound]);
 
   // Po animacji chowamy „+N”, żeby nie odtwarzał się ponownie po powrocie z widoku finału.

@@ -1,0 +1,16 @@
+import { assert } from "./assert";
+import type { GameState } from "./game";
+
+export type IntroKind = { kind: "round"; round: number } | { kind: "final" };
+
+/**
+ * Czy pokazać planszę z rzepkami: tylko przy przejściu do przodu – z rund do finału albo do następnej rundy.
+ * Powrót (z podziękowań, z finału, „Wstecz” do poprzedniej rundy) nie uruchamia animacji.
+ */
+export function introFor(before: GameState, state: GameState): IntroKind | null {
+  assert(Number.isInteger(state.round) && state.round >= 1, "introFor: bad round");
+  if (before.view !== "game") return null;
+  if (state.view === "final") return { kind: "final" };
+  if (state.view === "game" && state.round > before.round) return { kind: "round", round: state.round };
+  return null;
+}
