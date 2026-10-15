@@ -7,9 +7,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const QUESTIONS = JSON.parse(readFileSync(new URL("./questions.json", import.meta.url), "utf8"));
 
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) throw new Error(`Brak zmiennej środowiskowej ${name} (ustaw ją w .env.local)`);
+function requireEnv(...names) {
+  const value = names.map((n) => process.env[n]).find((v) => v);
+  if (!value) throw new Error(`Brak zmiennej środowiskowej ${names.join(" / ")} (ustaw ją w .env.local)`);
   return value;
 }
 
@@ -41,9 +41,11 @@ async function insertEventWithQuestions(db, name) {
 
 async function main() {
   if (QUESTIONS.length !== 26) throw new Error(`Oczekiwano 26 pytań, jest ${QUESTIONS.length}`);
-  const db = createClient(requireEnv("NEXT_PUBLIC_SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
-    auth: { persistSession: false },
-  });
+  const db = createClient(
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"),
+    requireEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY"),
+    { auth: { persistSession: false } },
+  );
   const { forceNew, name } = parseArgs(process.argv.slice(2));
   const active = await findActiveEvent(db);
   if (active && !forceNew) {

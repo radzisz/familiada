@@ -26,6 +26,8 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 | `ANTHROPIC_MODEL` | opcjonalnie, domyślnie `claude-opus-5-5` |
 | `NEXT_PUBLIC_BASE_URL` | opcjonalnie, adres w kodzie QR (domyślnie adres, pod którym otwarto `/qr`) |
 
+**Supabase podłączony przez integrację Vercel:** zmienne bazy (`NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_SECRET_KEY`) ustawia integracja – aplikacja przyjmuje obie nazwy. Ręcznie dodaj tylko `ADMIN_PIN` i (opcjonalnie) `ANTHROPIC_API_KEY`. Lokalnie: `vercel env pull .env.local`.
+
 ## 2. Baza danych (Supabase)
 
 **Chmura (produkcja):** w Supabase → SQL Editor uruchom po kolei:
