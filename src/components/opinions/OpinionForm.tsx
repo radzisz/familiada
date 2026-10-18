@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SurveyShell } from "@/components/survey/SurveyMessage";
-import { DEFAULT_BRANDING } from "@/lib/branding";
+import { SurveyFooter, SurveyShell } from "@/components/survey/SurveyMessage";
+import type { Branding } from "@/lib/branding";
 import { postJson } from "@/lib/client/api";
 import { readStorage, writeStorage } from "@/lib/client/storage";
 import { OPINION_ANSWER_MAX, OPINION_SURVEY, type OpinionQuestion, type OpinionSection } from "@/lib/opinions";
@@ -27,7 +27,7 @@ function loadDraft(retreat: string): Answers {
 }
 
 /** Cała ankieta na jednej stronie; szkic trzymany w telefonie do czasu wysłania. */
-export function OpinionForm({ retreat }: { retreat: string }) {
+export function OpinionForm({ retreat, branding }: { retreat: string; branding: Branding }) {
   const [answers, setAnswers] = useState<Answers>({});
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState("");
@@ -55,14 +55,15 @@ export function OpinionForm({ retreat }: { retreat: string }) {
 
   if (phase === "done") {
     return (
-      <SurveyShell branding={DEFAULT_BRANDING} footer>
+      <SurveyShell branding={branding} footer>
         <h1 className="sv-title">{OPINION_SURVEY.thanks}</h1>
       </SurveyShell>
     );
   }
 
   return (
-    <SurveyShell branding={DEFAULT_BRANDING} footer={false}>
+    // Stopka z logami na końcu przewijanej treści – stała zabierałaby miejsce na pytania.
+    <SurveyShell branding={branding} footer={false}>
       <form className="op" onSubmit={submit}>
         <h1 className="sv-title">{OPINION_SURVEY.title}</h1>
         <p className="sv-step">{retreat}</p>
@@ -74,6 +75,7 @@ export function OpinionForm({ retreat }: { retreat: string }) {
         <button type="submit" className="sv-btn primary" disabled={phase === "sending"}>
           {phase === "sending" ? "Wysyłanie…" : "Wyślij"}
         </button>
+        <SurveyFooter branding={branding} />
       </form>
     </SurveyShell>
   );

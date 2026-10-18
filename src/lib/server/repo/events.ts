@@ -61,6 +61,15 @@ export async function fetchEvent(db: SupabaseClient, eventId: string): Promise<E
   return data ? toEventRow(data) : null;
 }
 
+/** Najnowsza rozgrywka – prawdziwa, a gdy takiej nie ma, testowa (null, gdy nie ma żadnej). */
+export async function fetchLatestEvent(db: SupabaseClient): Promise<EventRow | null> {
+  const { data, error } = await db
+    .from("events").select(EVENT_COLUMNS)
+    .order("is_test").order("created_at", { ascending: false }).limit(1).maybeSingle();
+  check("fetchLatestEvent", error);
+  return data ? toEventRow(data) : null;
+}
+
 export async function updateSurveyOpen(db: SupabaseClient, eventId: string, open: boolean): Promise<void> {
   const { error } = await db.from("events").update({ survey_open: open }).eq("id", eventId);
   check("updateSurveyOpen", error);
