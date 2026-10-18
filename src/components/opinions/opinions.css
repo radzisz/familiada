@@ -16,3 +16,10 @@
 .op-option.on { background: var(--sv-green); color: #fff; }
 .op-option:focus-visible, .op-textarea:focus-visible { outline: 3px solid var(--sv-gold); outline-offset: 3px; }
 .op .sv-btn:disabled { opacity: .6; }
+.op-note {
+  margin: 0; padding: 10px 14px; border-left: 4px solid var(--sv-gold); background: #fff; border-radius: 0 10px 10px 0;
+  color: var(--sv-green); font-weight: 700;
+}
+.op-label { margin-bottom: -6px; font-weight: 700; color: var(--sv-green); }
+.op-consent { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--sv-muted); line-height: 1.35; }
+.op-consent input { flex: none; width: 24px; height: 24px; margin: 1px 0 0; accent-color: var(--sv-green); }

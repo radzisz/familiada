@@ -5,7 +5,10 @@ import { SurveyShell } from "@/components/survey/SurveyMessage";
 import type { Branding } from "@/lib/branding";
 import { postJson } from "@/lib/client/api";
 import { readStorage, writeStorage } from "@/lib/client/storage";
-import { OPINION_ANSWER_MAX, OPINION_SURVEY, scaleOf, type OpinionQuestion, type OpinionSection } from "@/lib/opinions";
+import {
+  CONTACT_EMAIL_MAX, CONTACT_NAME_MAX, contactError, OPINION_ANSWER_MAX, OPINION_SURVEY, scaleOf,
+  type OpinionContact, type OpinionQuestion, type OpinionSection,
+} from "@/lib/opinions";
 import "./opinions.css";
 
 type Phase = "intro" | "questions" | "sending" | "done";
@@ -94,7 +97,7 @@ export function OpinionForm({ retreat, branding }: { retreat: string; branding: 
   if (phase === "done") {
     return (
       <SurveyShell branding={branding} footer>
-        <h1 className="sv-title">{OPINION_SURVEY.thanks}</h1>
+        <ContactStep retreat={retreat} />
       </SurveyShell>
     );
   }
@@ -108,6 +111,73 @@ export function OpinionForm({ retreat, branding }: { retreat: string; branding: 
         sending={phase === "sending"} error={error} onAnswer={setAnswer} onGo={goTo}
       />
     </SurveyShell>
+  );
+}
+
+type ContactPhase = "form" | "sending" | "sent" | "skipped";
+
+/** Po wysłaniu ankiety: podziękowanie i opcjonalny kontakt – osobne zgłoszenie, niepowiązane z odpowiedziami. */
+function ContactStep({ retreat }: { retreat: string }) {
+  const [contact, setContact] = useState<OpinionContact>({ name: "", email: "", consent: false });
+  const [phase, setPhase] = useState<ContactPhase>("form");
+  const [error, setError] = useState("");
+  const c = OPINION_SURVEY.contact;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const invalid = contactError(contact);
+    if (invalid) return setError(invalid);
+    setPhase("sending");
+    setError("");
+    const res = await postJson("/api/opinie/kontakt", { retreat, ...contact });
+    if (!res.ok) {
+      setError(res.error);
+      return setPhase("form");
+    }
+    setPhase("sent");
+  }
+
+  if (phase === "sent" || phase === "skipped") {
+    return (
+      <>
+        <h1 className="sv-title">{OPINION_SURVEY.thanks}</h1>
+        {phase === "sent" && <p className="sv-text">Kontakt zapisany – odezwiemy się.</p>}
+      </>
+    );
+  }
+  return (
+    <form className="op" onSubmit={submit}>
+      <h1 className="sv-title">Dziękujemy za ankietę!</h1>
+      <h2 className="op-question">{c.title}</h2>
+      <p className="sv-text">{c.text}</p>
+      <p className="op-note">{c.anonymity}</p>
+      <label className="op-label" htmlFor="op-name">Imię i nazwisko</label>
+      <input
+        id="op-name" className="sv-input" value={contact.name} maxLength={CONTACT_NAME_MAX} autoComplete="name"
+        onChange={(e) => setContact((x) => ({ ...x, name: e.target.value }))}
+      />
+      <label className="op-label" htmlFor="op-email">Adres e-mail</label>
+      <input
+        id="op-email" className="sv-input" type="email" inputMode="email" value={contact.email} maxLength={CONTACT_EMAIL_MAX}
+        autoComplete="email" onChange={(e) => setContact((x) => ({ ...x, email: e.target.value }))}
+      />
+      <label className="op-consent">
+        <input
+          type="checkbox" checked={contact.consent}
+          onChange={(e) => setContact((x) => ({ ...x, consent: e.target.checked }))}
+        />
+        <span>{c.consent}</span>
+      </label>
+      {error && <p className="sv-error" role="alert">{error}</p>}
+      <div className="sv-actions">
+        <button type="button" className="sv-btn ghost" disabled={phase === "sending"} onClick={() => setPhase("skipped")}>
+          Nie, dziękuję
+        </button>
+        <button type="submit" className="sv-btn primary" disabled={phase === "sending"}>
+          {phase === "sending" ? "Wysyłanie…" : "Zapisz kontakt"}
+        </button>
+      </div>
+    </form>
   );
 }
 

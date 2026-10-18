@@ -21,6 +21,7 @@ export default async function OpinionsAdminPage() {
     .from("opinions").select("id, created_at, retreat, answers").order("created_at", { ascending: false });
   check("opinions.select", error);
   const rows = (data ?? []) as OpinionRow[];
+  const contacts = await fetchContacts();
   return (
     <main className="ad">
       <h1>Opinie o rekolekcjach <small>({rows.length})</small></h1>
@@ -51,8 +52,41 @@ export default async function OpinionsAdminPage() {
           </tbody>
         </table>
       </div>
+      <h2>Kontakty <small>({contacts.length}) – zapisane osobno, bez powiązania z odpowiedziami</small></h2>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ borderCollapse: "collapse", fontSize: 14, background: "#fff" }}>
+          <thead>
+            <tr>{["Data", "Rekolekcje", "Imię i nazwisko", "E-mail"].map((h) => <th key={h} style={cell}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {contacts.map((c) => (
+              <tr key={c.id}>
+                <td style={cell}>{new Date(c.created_at).toLocaleString("pl-PL")}</td>
+                <td style={cell}>{c.retreat ?? ""}</td>
+                <td style={cell}>{c.name ?? ""}</td>
+                <td style={cell}><a href={`mailto:${c.email}`}>{c.email}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
+}
+
+interface ContactRow {
+  id: string;
+  created_at: string;
+  retreat: string | null;
+  name: string | null;
+  email: string;
+}
+
+async function fetchContacts(): Promise<ContactRow[]> {
+  const { data, error } = await serviceClient()
+    .from("opinion_contacts").select("id, created_at, retreat, name, email").order("created_at", { ascending: false });
+  check("opinion_contacts.select", error);
+  return (data ?? []) as ContactRow[];
 }
 
 /** Średnia ocen z liczbą odpowiedzi, np. „4,3 (12)”; przy NPS dodatkowo wynik NPS. */

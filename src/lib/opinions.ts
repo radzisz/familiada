@@ -26,6 +26,15 @@ export const OPINION_SURVEY = {
   retreat: "Karczówka, październik 2026",
   intro: "Dziękujemy, że byliście z nami. Ankieta jest anonimowa i zajmie około 3 minut.",
   thanks: "Dziękujemy! Monika i Dominik",
+  contact: {
+    title: "Zostańmy w kontakcie",
+    text: "Jeśli chcecie, zostawcie nam jeszcze kontakt – napiszemy o kolejnych rekolekcjach. To zupełnie opcjonalne.",
+    anonymity: "Wasze odpowiedzi w ankiecie pozostają anonimowe. Kontakt zapisujemy osobno i nie łączymy go z nimi.",
+    consent:
+      "Wyrażam zgodę na przetwarzanie moich danych osobowych (imię i nazwisko, adres e-mail) przez Fundację YoungTree " +
+      "z siedzibą w Krakowie w celu utrzymania kontaktu, w tym informowania o kolejnych rekolekcjach i wydarzeniach. " +
+      "Zgodę mogę w każdej chwili wycofać.",
+  },
   scaleMin: "zdecydowanie nie / bardzo słabo",
   scaleMax: "zdecydowanie tak / bardzo dobrze",
   sections: [
@@ -92,6 +101,29 @@ export const OPINION_QUESTIONS: OpinionQuestion[] = OPINION_SURVEY.sections.flat
 
 export const OPINION_ANSWER_MAX = 2000;
 export const RETREAT_MAX = 100;
+
+export const CONTACT_NAME_MAX = 120;
+export const CONTACT_EMAIL_MAX = 200;
+
+export interface OpinionContact {
+  name: string;
+  email: string;
+  consent: boolean;
+}
+
+/** Kontakt wymaga poprawnego e-maila i zgody (imię i nazwisko opcjonalne). Zwraca błąd albo null. */
+export function contactError(c: OpinionContact): string | null {
+  if (!z.email().safeParse(c.email.trim()).success) return "Wpiszcie poprawny adres e-mail.";
+  if (!c.consent) return "Zaznaczcie zgodę na przetwarzanie danych.";
+  return null;
+}
+
+export const OpinionContactSchema = z.object({
+  retreat: z.string().trim().max(RETREAT_MAX).nullable(),
+  name: z.string().max(CONTACT_NAME_MAX),
+  email: z.string().max(CONTACT_EMAIL_MAX),
+  consent: z.boolean(),
+});
 
 export const OpinionSubmitSchema = z.object({
   retreat: z.string().trim().max(RETREAT_MAX).nullable(),
