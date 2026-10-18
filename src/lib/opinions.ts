@@ -47,7 +47,6 @@ export const OPINION_SURVEY = {
         scale("w3", "Niewola finansowa"),
         scale("w4", "Dawanie"),
         scale("w5", "Wychowanie do odpowiedzialności w sferze finansów"),
-        scale("w6", "Dziecięce finanse"),
       ],
     },
     {
