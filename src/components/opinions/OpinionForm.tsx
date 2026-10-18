@@ -127,10 +127,25 @@ function QuestionField({ q, value, onChange }: { q: OpinionQuestion; value: stri
             className={`op-option${value === o ? " on" : ""}`}
             onClick={() => onChange(value === o ? "" : o)}
           >
+            {o === "1" && <Face mood="sad" />}
             {o}
+            {o === "5" && <Face mood="happy" />}
           </button>
         ))}
       </div>
     </fieldset>
+  );
+}
+
+/** Buźka przy skrajnych ocenach: 1 – smutna, 5 – uśmiechnięta. */
+function Face({ mood }: { mood: "sad" | "happy" }) {
+  const mouth = mood === "happy" ? "M8 14.5q4 3.5 8 0" : "M8 16.5q4 -3.5 8 0";
+  return (
+    <svg className="op-face" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="8.5" cy="9.5" r="1.4" fill="currentColor" />
+      <circle cx="15.5" cy="9.5" r="1.4" fill="currentColor" />
+      <path d={mouth} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }

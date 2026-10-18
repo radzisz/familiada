@@ -11,7 +11,9 @@
 .op-option {
   min-height: 50px; border-radius: 12px; border: 2px solid var(--sv-green-2); background: #fff;
   color: var(--sv-green); font-size: 20px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
 }
+.op-face { width: 20px; height: 20px; flex: none; }
 .op-option.on { background: var(--sv-green); color: #fff; }
 .op-option:focus-visible, .op-textarea:focus-visible { outline: 3px solid var(--sv-gold); outline-offset: 3px; }
 .op .sv-btn { margin-top: 4px; }
