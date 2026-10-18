@@ -12,6 +12,8 @@ Ankieta w telefonie (QR) w ciągu dnia → automatycznie zliczone i pogrupowane 
 | `/qr/<id>` | prowadzący (PIN), rzutnik | duży kod QR z linkiem do `/ankieta/<id>` |
 | `/tablica/<id>` | prowadzący (PIN), rzutnik | rundy 1–5 (×1 ×1 ×1 ×2 ×3), odkrywanie, X, pule, finał ze stoperem |
 | `/tablica/<id>?pilot=1` | prowadzący, telefon | ten sam panel bez tablicy i bez dźwięku – steruje grą na rzutniku |
+| `/opinie` | uczestnik | anonimowa ankieta opinii o rekolekcjach (`?r=<nazwa>` – inne rekolekcje); moduł tymczasowy, do przeniesienia do innego projektu |
+| `/admin/opinie` | prowadzący (PIN) | zebrane opinie w tabeli, średnie ocen, eksport CSV |
 | `/` | – | tylko prośba o zeskanowanie kodu QR |
 
 Stack: Next.js 15 (App Router, TypeScript), Supabase (Postgres), Anthropic API (Claude) do grupowania, zwykły CSS.
@@ -34,7 +36,7 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 
 ## 2. Baza danych (Supabase)
 
-**Chmura (produkcja):** w Supabase → SQL Editor uruchom po kolei:
+**Chmura (produkcja):** migracje wgrywają się same – nowy plik w `supabase/migrations/` wypchnięty na `main` trafia do bazy przez integrację Supabase z GitHubem (patrz „Model deploymentu” w punkcie 4). Niczego nie uruchamiasz ręcznie. Lista poniżej to opis migracji (i kolejność na wypadek ręcznego stawiania bazy w SQL Editorze):
 
 1. `supabase/migrations/0001_schema.sql` – tabele, RLS, funkcje,
 2. `supabase/migrations/0002_seed.sql` – pierwsza rozgrywka z 26 pytaniami (opcjonalnie – rozgrywki tworzysz też w `/admin`),
@@ -43,6 +45,7 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 5. `supabase/migrations/0005_branding.sql` – nazwa wydarzenia i współorganizator z logo (Ustawienia rozgrywki); istniejącym rozgrywkom wpisuje dotychczasowe „Rekolekcje dla małżeństw · Kraków 2026” i Wspólnotę Małżeństw. **Uruchom też na istniejącej bazie.**
 6. `supabase/migrations/0006_logo_version.sql` – wersja logo współorganizatora (logo idzie osobnym adresem `/api/logo/<id>`, z cache). **Uruchom też na istniejącej bazie.**
 7. `supabase/migrations/0007_save_game_state.sql` – zapis stanu gry jednym zapytaniem (funkcja `upsert_game_state`). **Wymagana przed wdrożeniem kodu, który jej używa.**
+8. `supabase/migrations/0008_opinions.sql` – tabela `opinions` (opinie o rekolekcjach z `/opinie`, odpowiedzi w jsonb).
 
 Albo zamiast kroku 2: `npm run seed` (używa `.env.local`).
 
@@ -65,6 +68,14 @@ npm run check        # typecheck + eslint (0 ostrzeżeń) + testy jednostkowe
 ```
 
 ## 4. Deploy na Vercel
+
+**Model deploymentu:** `git push` na `main` i nic więcej.
+
+- **Aplikacja** – Vercel buduje i wdraża każdy push na `main` (funkcje w regionie `dub1`, `vercel.json`).
+- **Baza** – integracja Supabase z GitHubem wgrywa nowe migracje z `supabase/migrations/` przy tym samym pushu. Migracje muszą być bezpieczne do ponownego uruchomienia (`if not exists`, `create or replace`) i zgodne z kodem, który chodzi chwilę dłużej po starej wersji.
+- Zmienne środowiskowe ustawia integracja Supabase w Vercel (punkt 1).
+
+Pierwsze postawienie:
 
 1. Wypchnij repozytorium na GitHub i zaimportuj je w Vercel (framework wykryje się sam).
 2. W Vercel → Settings → Environment Variables dodaj zmienne z punktu 1.
