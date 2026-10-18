@@ -1,20 +1,17 @@
 /* Opinie o rekolekcjach – korzysta z klas ankiety (.sv-*), tu tylko sekcje i pola formularza */
 .op { display: flex; flex-direction: column; gap: 18px; }
-.op-section { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; border-top: 1px solid #cfdcd7; }
-.op-section-title { margin: 0; font-family: var(--font-serif), Cambria, Georgia, serif; font-size: 25px; color: var(--sv-green); line-height: 1.15; }
 .op-lead { margin: 0; font-weight: 700; color: var(--sv-ink); }
 .op-legend { margin: 0; color: var(--sv-muted); font-size: 15px; }
 .op-field { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.op-question { padding: 0; font-size: 19px; font-weight: 700; color: var(--sv-green); line-height: 1.25; }
-.op-textarea { min-height: 120px; font-size: 19px; resize: vertical; font-family: inherit; }
+.op-question { padding: 0; font-family: var(--font-serif), Cambria, Georgia, serif; font-size: 26px; font-weight: 700; color: var(--sv-green); line-height: 1.2; }
+.op-textarea { min-height: 160px; font-size: 19px; resize: vertical; font-family: inherit; }
 .op-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .op-option {
-  min-height: 50px; border-radius: 12px; border: 2px solid var(--sv-green-2); background: #fff;
+  min-height: 64px; border-radius: 12px; border: 2px solid var(--sv-green-2); background: #fff;
   color: var(--sv-green); font-size: 20px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; gap: 5px;
 }
 .op-face { width: 20px; height: 20px; flex: none; }
 .op-option.on { background: var(--sv-green); color: #fff; }
 .op-option:focus-visible, .op-textarea:focus-visible { outline: 3px solid var(--sv-gold); outline-offset: 3px; }
-.op .sv-btn { margin-top: 4px; }
 .op .sv-btn:disabled { opacity: .6; }

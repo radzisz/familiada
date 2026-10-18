@@ -24,7 +24,7 @@ export function SurveyShell({ branding, footer, children }: ShellProps) {
   );
 }
 
-export function SurveyFooter({ branding }: { branding: Branding }) {
+function SurveyFooter({ branding }: { branding: Branding }) {
   return (
     <footer className="sv-footer">
       {branding.eventName && <p className="sv-footer-title">{branding.eventName}</p>}
