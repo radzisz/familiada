@@ -1,5 +1,5 @@
 import { PinForm } from "@/components/PinForm";
-import { OPINION_QUESTIONS, type StoredAnswer } from "@/lib/opinions";
+import { npsScore, OPINION_QUESTIONS, type OpinionQuestion, type StoredAnswer } from "@/lib/opinions";
 import { isAdmin } from "@/lib/server/auth";
 import { check, serviceClient } from "@/lib/server/db";
 import "@/components/admin/admin.css";
@@ -37,7 +37,7 @@ export default async function OpinionsAdminPage() {
           <tbody>
             <tr style={{ fontWeight: 700 }}>
               <td style={cell} colSpan={2}>Średnia</td>
-              {OPINION_QUESTIONS.map((q) => <td key={q.id} style={cell}>{q.type === "scale" ? average(rows, q.id) : ""}</td>)}
+              {OPINION_QUESTIONS.map((q) => <td key={q.id} style={cell}>{summary(rows, q)}</td>)}
             </tr>
             {rows.map((r) => (
               <tr key={r.id}>
@@ -55,12 +55,14 @@ export default async function OpinionsAdminPage() {
   );
 }
 
-/** Średnia ocen 1–5 z liczbą odpowiedzi, np. „4,3 (12)”. */
-function average(rows: OpinionRow[], id: string): string {
-  const values = rows.flatMap((r) => r.answers.filter((a) => a.id === id).map((a) => Number(a.answer)));
+/** Średnia ocen z liczbą odpowiedzi, np. „4,3 (12)”; przy NPS dodatkowo wynik NPS. */
+function summary(rows: OpinionRow[], q: OpinionQuestion): string {
+  if (q.type === "text") return "";
+  const values = rows.flatMap((r) => r.answers.filter((a) => a.id === q.id).map((a) => Number(a.answer)));
   if (values.length === 0) return "–";
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
-  return `${avg.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} (${values.length})`;
+  const text = `${avg.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} (${values.length})`;
+  return q.type === "nps" ? `NPS ${npsScore(values)} · śr. ${text}` : text;
 }
 
 const cell: React.CSSProperties = { border: "1px solid #cfdcd7", padding: "6px 8px", verticalAlign: "top", textAlign: "left", whiteSpace: "pre-wrap", minWidth: 120 };

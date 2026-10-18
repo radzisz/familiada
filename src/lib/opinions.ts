@@ -7,6 +7,8 @@ import { z } from "zod";
 
 export type OpinionQuestion =
   | { id: string; type: "scale"; text: string }
+  /** Net Promoter Score na skali 1–10: polecający 9–10, krytycy 1–6. */
+  | { id: string; type: "nps"; text: string; min: string; max: string }
   | { id: string; type: "text"; text: string };
 
 export interface OpinionSection {
@@ -54,9 +56,7 @@ export const OPINION_SURVEY = {
       questions: [
         scale("f1", "Familiada jako całość"),
         scale("f2", "Dobrze się bawiliśmy i lepiej poznaliśmy inne małżeństwa"),
-        scale("f3", "Pytania były trafne i zabawne"),
         scale("f4", "Ankieta z kodem QR przed grą była prosta do wypełnienia"),
-        scale("f5", "Prowadzenie i tempo gry"),
       ],
     },
     {
@@ -74,6 +74,15 @@ export const OPINION_SURVEY = {
       questions: [
         { id: "o1", type: "text", text: "Co przeżyliście podczas rekolekcji i co zabieracie do domu? (moment, myśl, rozmowa, decyzja)" },
         { id: "o2", type: "text", text: "Co w naszych wykładach poprawić, rozwinąć albo skrócić?" },
+      ],
+    },
+    {
+      title: "Ogólna ocena",
+      questions: [
+        {
+          id: "nps", type: "nps", text: "Na ile prawdopodobne jest, że polecicie te rekolekcje znajomym?",
+          min: "zupełnie nieprawdopodobne", max: "na pewno polecimy",
+        },
       ],
     },
   ] satisfies OpinionSection[],
@@ -95,7 +104,22 @@ export interface StoredAnswer {
   answer: string;
 }
 
-const isValid = (q: OpinionQuestion, value: string) => q.type === "text" || /^[1-5]$/.test(value);
+/** Możliwe oceny pytania zamkniętego (puste dla pytań otwartych). */
+export function scaleOf(q: OpinionQuestion): string[] {
+  if (q.type === "text") return [];
+  const max = q.type === "nps" ? 10 : 5;
+  return Array.from({ length: max }, (_, i) => String(i + 1));
+}
+
+const isValid = (q: OpinionQuestion, value: string) => q.type === "text" || scaleOf(q).includes(value);
+
+/** NPS = % polecających (9–10) − % krytyków (1–6), zaokrąglony; null bez odpowiedzi. */
+export function npsScore(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const promoters = values.filter((v) => v >= 9).length;
+  const detractors = values.filter((v) => v <= 6).length;
+  return Math.round(((promoters - detractors) / values.length) * 100);
+}
 
 /** Odpowiedzi w kolejności pytań, z treścią pytania; puste i niepasujące do pytania są pomijane. */
 export function prepareOpinion(answers: Record<string, string>): StoredAnswer[] {

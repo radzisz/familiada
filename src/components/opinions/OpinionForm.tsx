@@ -5,7 +5,7 @@ import { SurveyShell } from "@/components/survey/SurveyMessage";
 import type { Branding } from "@/lib/branding";
 import { postJson } from "@/lib/client/api";
 import { readStorage, writeStorage } from "@/lib/client/storage";
-import { OPINION_ANSWER_MAX, OPINION_SURVEY, type OpinionQuestion, type OpinionSection } from "@/lib/opinions";
+import { OPINION_ANSWER_MAX, OPINION_SURVEY, scaleOf, type OpinionQuestion, type OpinionSection } from "@/lib/opinions";
 import "./opinions.css";
 
 type Phase = "intro" | "questions" | "sending" | "done";
@@ -26,7 +26,6 @@ interface Step {
 const STEPS: Step[] = OPINION_SURVEY.sections.flatMap((section, i) =>
   section.questions.map((question) => ({ question, section, sectionNumber: i + 1 })),
 );
-const SCALE = ["1", "2", "3", "4", "5"];
 /** Po wybraniu oceny chwila na zobaczenie zaznaczenia, potem następne pytanie. */
 const AUTO_NEXT_MS = 350;
 const EMPTY: Draft = { answers: {}, index: 0 };
@@ -151,6 +150,7 @@ function QuestionStep({ step, index, answers, sending, error, onAnswer, onGo }: 
       {q.type === "scale" && (
         <p className="op-legend">1 – {OPINION_SURVEY.scaleMin}<br />5 – {OPINION_SURVEY.scaleMax}</p>
       )}
+      {q.type === "nps" && <p className="op-legend">1 – {q.min}<br />10 – {q.max}</p>}
       {error && <p className="sv-error" role="alert">{error}</p>}
       <div className="sv-actions">
         <button type="button" className="sv-btn ghost" disabled={sending} onClick={() => onGo(index - 1)}>Wstecz</button>
@@ -175,11 +175,13 @@ function QuestionField({ q, value, onChange }: { q: OpinionQuestion; value: stri
       </div>
     );
   }
+  const scale = scaleOf(q);
+  const last = scale[scale.length - 1];
   return (
     <fieldset className="op-field">
       <legend className="op-question">{q.text}</legend>
-      <div className="op-scale">
-        {SCALE.map((o) => (
+      <div className={`op-scale${q.type === "nps" ? " nps" : ""}`}>
+        {scale.map((o) => (
           <button
             key={o} type="button" aria-pressed={value === o}
             className={`op-option${value === o ? " on" : ""}`}
@@ -187,7 +189,7 @@ function QuestionField({ q, value, onChange }: { q: OpinionQuestion; value: stri
           >
             {o === "1" && <Face mood="sad" />}
             {o}
-            {o === "5" && <Face mood="happy" />}
+            {o === last && <Face mood="happy" />}
           </button>
         ))}
       </div>
@@ -195,7 +197,7 @@ function QuestionField({ q, value, onChange }: { q: OpinionQuestion; value: stri
   );
 }
 
-/** Buźka przy skrajnych ocenach: 1 – smutna, 5 – uśmiechnięta. */
+/** Buźka przy skrajnych ocenach: najniższa – smutna, najwyższa – uśmiechnięta. */
 function Face({ mood }: { mood: "sad" | "happy" }) {
   const mouth = mood === "happy" ? "M8 14.5q4 3.5 8 0" : "M8 16.5q4 -3.5 8 0";
   return (
