@@ -28,7 +28,7 @@ export function ToolPage({ slug }: { slug: ToolSlug }) {
       <section className="st-section">
         <div className="st-wrap">
           <h2>Co dostajesz</h2>
-          <div className="st-grid">
+          <div className={`st-grid${tool.features.length % 3 === 1 ? " two" : ""}`}>
             {tool.features.map((f) => (
               <article key={f.title} className="st-card">
                 <h3>{f.title}</h3>

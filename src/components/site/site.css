@@ -35,7 +35,11 @@
 .st-nav { display: flex; gap: 22px; margin-left: auto; }
 .st-nav a { text-decoration: none; font-weight: 600; color: var(--st-muted); }
 .st-nav a:hover { color: var(--st-green); }
-@media (max-width: 760px) { .st-nav { display: none; } .st-header-in > .st-btn { margin-left: auto; } }
+@media (max-width: 760px) {
+  .st-header-in { flex-wrap: wrap; gap: 4px 16px; padding-top: 10px; }
+  .st-header-in > .st-btn { margin-left: auto; }
+  .st-nav { order: 3; width: 100%; margin: 0; gap: 18px; overflow-x: auto; padding: 4px 0 10px; font-size: 15px; white-space: nowrap; }
+}
 
 .st-footer { background: var(--st-green); color: rgba(255, 255, 255, .8); padding: 48px 0 24px; }
 .st-footer .st-logo { color: #fff !important; }
@@ -77,6 +81,7 @@
 .st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
 .st-grid.four { grid-template-columns: repeat(4, 1fr); }
 .st-sub + .st-grid { margin-top: 0; }
+.st-grid.two { grid-template-columns: repeat(2, 1fr); }
 .st-card { background: var(--st-card); border: 1px solid var(--st-line); border-radius: 18px; padding: 22px; }
 .st-card h3 { font-size: 19px; }
 .st-card p { color: var(--st-muted); font-size: 16px; }
@@ -136,8 +141,9 @@
 
 /* Podglądy narzędzi (ToolVisual) */
 .st-visual { position: relative; min-height: 320px; display: flex; align-items: center; justify-content: center; }
-.st-visual.compact { min-height: 0; height: 190px; overflow: hidden; padding: 18px; background: color-mix(in srgb, var(--st-accent) 12%, #fff); }
-.st-visual.compact > * { transform: scale(.62); transform-origin: center; flex: none; }
+.st-visual.compact { min-height: 0; height: 210px; overflow: hidden; padding: 18px; background: color-mix(in srgb, var(--st-accent) 12%, #fff); }
+.st-visual.compact > * { zoom: .55; flex: none; }
+.st-visual.compact .bv-board { box-shadow: none; }
 
 .bv-board { width: 100%; max-width: 480px; background: radial-gradient(circle at 50% 0, #1b2340, #0b0f1c 70%); border-radius: 20px; padding: 22px; border: 3px solid #2a3355; box-shadow: 0 20px 50px rgba(11, 15, 28, .35), inset 0 0 40px rgba(255, 178, 26, .08); font-family: var(--font-led), monospace; color: #ffb21a; }
 .st-visual.compact .bv-board { width: 480px; }
@@ -165,11 +171,11 @@
 .svv-bars span { flex: 1; background: var(--st-accent); border-radius: 4px 4px 0 0; opacity: .85; }
 .svv-nps b { color: #2C7A6B; }
 
-.sg-screen { width: 340px; background: #1a1418; color: #f6efe6; border-radius: 16px; padding: 22px 24px 30px; box-shadow: 0 20px 50px rgba(26, 20, 24, .35); border: 3px solid #3a2a32; }
+.sg-screen { width: 360px; background: #1a1418; color: #f6efe6; border-radius: 16px; padding: 22px 24px 30px; box-shadow: 0 20px 50px rgba(26, 20, 24, .35); border: 3px solid #3a2a32; }
 .sg-title { color: #e7b3bf; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; }
 .sg-title small { color: rgba(246, 239, 230, .55); font-weight: 400; }
-.sg-big { font-family: var(--font-serif), Georgia, serif; font-size: 28px; line-height: 1.3; margin-top: 14px !important; text-align: center; }
-.sg-phone { width: 200px; margin-left: -60px; margin-top: 140px; background: #fff; border: 7px solid #14231f; border-radius: 28px; padding: 18px 14px; box-shadow: 0 16px 40px rgba(20, 35, 31, .25); font-size: 13px; line-height: 1.15; }
+.sg-big { font-family: var(--font-serif), Georgia, serif; font-size: 24px; line-height: 1.3; margin-top: 14px !important; text-align: center; }
+.sg-phone { width: 200px; margin-left: -50px; margin-top: 170px; background: #fff; border: 7px solid #14231f; border-radius: 28px; padding: 18px 14px; box-shadow: 0 16px 40px rgba(20, 35, 31, .25); font-size: 13px; line-height: 1.15; }
 .sg-phone p { margin-bottom: 6px !important; color: var(--st-ink); }
 .sg-ch { display: block; white-space: pre; color: #9B3B4E; font-weight: 700; font-family: ui-monospace, monospace; font-size: 11px; }
 @media (max-width: 560px) {
@@ -178,3 +184,9 @@
   .bv-rows li { font-size: 21px; }
   .sg-screen { width: 100%; }
 }
+
+/* Kolaż na stronie głównej: tablica Familiady i telefon z ankietą */
+.st-collage { position: relative; padding: 0 0 70px 40px; }
+.st-collage .st-visual { min-height: 0; }
+.st-collage-phone { position: absolute; left: -10px; bottom: 0; zoom: .62; }
+@media (max-width: 560px) { .st-collage { padding: 0; } .st-collage-phone { display: none; } }

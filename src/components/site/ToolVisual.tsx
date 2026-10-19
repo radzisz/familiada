@@ -37,17 +37,33 @@ const SURVEY_BARS = [4, 9, 22, 41, 24];
 function SurveyVisual({ className }: { className: string }) {
   return (
     <div className={className} aria-hidden="true">
-      <div className="svv-phone">
-        <div className="svv-progress"><span style={{ width: "60%" }} /></div>
-        <p className="svv-step">Pytanie 6 z 10</p>
-        <p className="svv-q">Jak oceniasz wieczorne spotkania w grupach?</p>
-        <div className="svv-scale">{[1, 2, 3, 4, 5].map((n) => <span key={n} className={n === 4 ? "on" : undefined}>{n}</span>)}</div>
-      </div>
+      <SurveyPhone />
       <div className="svv-report">
         <p>Wieczory w grupach <b>4,3</b></p>
         <div className="svv-bars">{SURVEY_BARS.map((v, i) => <span key={i} style={{ height: `${v * 2}%` }} />)}</div>
         <p className="svv-nps">NPS <b>+62</b></p>
       </div>
+    </div>
+  );
+}
+
+export function SurveyPhone() {
+  return (
+    <div className="svv-phone" aria-hidden="true">
+      <div className="svv-progress"><span style={{ width: "60%" }} /></div>
+      <p className="svv-step">Pytanie 6 z 10</p>
+      <p className="svv-q">Jak oceniasz wieczorne spotkania w grupach?</p>
+      <div className="svv-scale">{[1, 2, 3, 4, 5].map((n) => <span key={n} className={n === 4 ? "on" : undefined}>{n}</span>)}</div>
+    </div>
+  );
+}
+
+/** Strona główna: tablica Familiady z telefonem uczestnika – „telefony i rzutnik” w jednym obrazku. */
+export function HeroCollage() {
+  return (
+    <div className="st-collage">
+      <ToolVisual slug="familiada" />
+      <div className="st-collage-phone"><SurveyPhone /></div>
     </div>
   );
 }

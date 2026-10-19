@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { ContactSection, Pricing, ToolCard } from "@/components/site/ToolPage";
-import { ToolVisual } from "@/components/site/ToolVisual";
+import { HeroCollage } from "@/components/site/ToolVisual";
 import { PLATFORM, TOOLS } from "@/lib/site";
+import { pageMetadata } from "@/lib/siteMetadata";
 
-export const metadata: Metadata = {
-  title: `${PLATFORM.name} – ${PLATFORM.tagline.toLowerCase()}`,
-  description:
-    "Familiada z odpowiedziami uczestników, ankiety po wydarzeniu z raportem i śpiewnik na rzutniku. " +
+export const metadata: Metadata = pageMetadata(
+  "/",
+  `${PLATFORM.name} – ${PLATFORM.tagline.toLowerCase()}`,
+  "Familiada z odpowiedziami uczestników, ankiety po wydarzeniu z raportem i śpiewnik na rzutniku. " +
     "Uczestnicy używają własnych telefonów – bez aplikacji i bez kont.",
-};
+);
 
 const BENEFITS = [
   { title: "Zaangażuje grupę", text: "Uczestnicy nie tylko słuchają – odpowiadają, grają i śpiewają, każdy ze swojego telefonu." },
@@ -52,9 +53,7 @@ export default function HomePage() {
               <a className="st-btn ghost" href="#kontakt">Napisz do nas</a>
             </div>
           </div>
-          <div>
-            <ToolVisual slug="familiada" />
-          </div>
+          <HeroCollage />
         </div>
       </section>
 
