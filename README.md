@@ -15,7 +15,9 @@ Ankieta w telefonie (QR) w ciągu dnia → automatycznie zliczone i pogrupowane 
 | `/opinie` | uczestnik | anonimowa ankieta opinii o rekolekcjach (`?r=<nazwa>` – inne rekolekcje); moduł tymczasowy, do przeniesienia do innego projektu |
 | `/admin/opinie` | prowadzący (PIN) | opinie: przeglądanie ankiet jedna po drugiej, podsumowanie (najwyżej/najniżej ocenione, wszystkie odpowiedzi otwarte, podsumowanie AI na żądanie), tabela ze średnimi, kontakty, eksport CSV; filtr rekolekcji (`?r=`) |
 | `/admin/opinie/raport` | prowadzący (PIN) | raport graficzny dla organizatorów (liczby, oceny w obszarach, rozkłady, NPS) – „Pobierz PDF” ściąga gotowy plik A4 z `/api/admin/opinie/raport` (generowany na serwerze, `@react-pdf/renderer`); `?otwarte=1` dołącza odpowiedzi otwarte |
-| `/` | – | tylko prośba o zeskanowanie kodu QR |
+| `/` | wszyscy | strona Animatorni: platforma, narzędzia, dla kogo, cennik, formularz „Napisz do nas” (treści w `src/lib/site.ts`) |
+| `/familiada`, `/ankiety`, `/spiewnik` | wszyscy | landingi narzędzi (śpiewnik oznaczony „wkrótce”) |
+| `/admin/kontakt` | prowadzący (PIN) | zapytania z formularza na stronie |
 
 Stack: Next.js 15 (App Router, TypeScript), Supabase (Postgres), Anthropic API (Claude) do grupowania, zwykły CSS.
 
@@ -48,6 +50,7 @@ Skopiuj `.env.example` do `.env.local` i uzupełnij:
 7. `supabase/migrations/0007_save_game_state.sql` – zapis stanu gry jednym zapytaniem (funkcja `upsert_game_state`). **Wymagana przed wdrożeniem kodu, który jej używa.**
 8. `supabase/migrations/0008_opinions.sql` – tabela `opinions` (opinie o rekolekcjach z `/opinie`, odpowiedzi w jsonb).
 9. `supabase/migrations/0009_opinion_contacts.sql` – tabela `opinion_contacts` (opcjonalny kontakt po ankiecie opinii, ze zgodą; bez powiązania z odpowiedziami).
+10. `supabase/migrations/0010_contact_requests.sql` – tabela `contact_requests` (zapytania z formularza „Napisz do nas” na stronie).
 
 Albo zamiast kroku 2: `npm run seed` (używa `.env.local`).
 

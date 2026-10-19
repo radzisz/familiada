@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Credits } from "@/components/Credits";
 import { useCallback, useEffect, useState } from "react";
 import { apiJson } from "@/lib/client/api";
@@ -28,7 +29,10 @@ export function EventsApp() {
   const { events, error, reload } = useEvents();
   return (
     <main className="ad">
-      <AdminHeader title="Familiada – rozgrywki" />
+      <AdminHeader title="Familiada – rozgrywki">
+        <Link href="/admin/opinie">Opinie</Link>
+        <Link href="/admin/kontakt">Zapytania ze strony</Link>
+      </AdminHeader>
       <section className="ad-panel" aria-label="Rozgrywki">
         <div className="ad-events-head">
           <NewEventDialog events={events ?? []} />
