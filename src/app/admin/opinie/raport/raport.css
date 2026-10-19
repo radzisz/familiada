@@ -1,0 +1,50 @@
+/* Raport dla organizatorów – jasny, do druku (A4) i do PDF. */
+.rp { min-height: 100dvh; background: #EEF3F1; color: #14231f; font-family: var(--font-sans), Calibri, "Segoe UI", Arial, sans-serif; padding: 16px; }
+.rp-tools { max-width: 860px; margin: 0 auto 12px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.rp-tools a { color: #1F4A42; font-weight: 700; }
+.rp-print { margin-left: auto; background: #A97A3E; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+.rp-page { max-width: 860px; margin: 0 auto; background: #fff; border-radius: 14px; padding: 32px 36px; box-shadow: 0 2px 12px rgba(20, 35, 31, .08); }
+.rp h1, .rp h2, .rp h3 { font-family: var(--font-serif), Cambria, Georgia, serif; color: #1F4A42; margin: 0; }
+.rp h1 { font-size: 30px; line-height: 1.15; }
+.rp h2 { font-size: 20px; margin-bottom: 10px; }
+.rp h2 small { color: #5a6b66; font-weight: 400; font-size: 14px; }
+.rp h3 { font-size: 16px; margin: 14px 0 2px; }
+.rp-head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; border-bottom: 3px solid #A97A3E; padding-bottom: 16px; }
+.rp-kicker { margin: 0 0 4px; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; font-weight: 700; color: #A97A3E; }
+.rp-sub { margin: 6px 0 0; color: #5a6b66; }
+.rp-logos { display: flex; gap: 10px; flex: none; }
+.rp-logos img { width: 64px; height: 64px; object-fit: contain; border-radius: 50%; }
+.rp-logos img.fill { object-fit: cover; }
+
+.rp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 22px 0 6px; }
+.rp-kpi { border: 1px solid #cfdcd7; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.rp-kpi b { font-size: 34px; line-height: 1.1; color: #1F4A42; font-variant-numeric: tabular-nums; }
+.rp-kpi b small { font-size: 16px; color: #5a6b66; font-weight: 400; }
+.rp-kpi span { font-size: 14px; color: #5a6b66; }
+
+.rp-block { margin-top: 26px; break-inside: avoid; }
+.rp-block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.rp-section { break-inside: avoid; }
+.rp-note { margin: -4px 0 12px; color: #5a6b66; font-size: 14px; }
+
+.rp-areas { display: flex; flex-direction: column; gap: 8px; }
+.rp-area { display: grid; grid-template-columns: minmax(0, 220px) 1fr 48px; gap: 12px; align-items: center; }
+.rp-area b { font-size: 18px; color: #1F4A42; text-align: right; font-variant-numeric: tabular-nums; }
+.rp-area-bar { height: 16px; background: #f2f5f4; border-radius: 4px; overflow: hidden; }
+.rp-area-bar i { display: block; height: 100%; background: #1F4A42; border-radius: 0 4px 4px 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+.rp-open blockquote { margin: 0 0 8px; padding: 8px 12px; border-left: 3px solid #A97A3E; background: #fffaf0; white-space: pre-wrap; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.rp-foot { margin-top: 28px; padding-top: 10px; border-top: 1px solid #cfdcd7; color: #5a6b66; font-size: 13px; }
+
+@media (max-width: 560px) {
+  .rp-page { padding: 20px 16px; }
+  .rp-head { flex-direction: column-reverse; }
+  .rp-area { grid-template-columns: minmax(0, 1fr) 48px; }
+  .rp-area span { grid-column: 1 / -1; }
+}
+@media print {
+  @page { size: A4; margin: 14mm; }
+  .rp { background: #fff; padding: 0; }
+  .rp-tools { display: none; }
+  .rp-page { max-width: none; box-shadow: none; padding: 0; border-radius: 0; }
+}

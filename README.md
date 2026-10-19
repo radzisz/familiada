@@ -13,7 +13,8 @@ Ankieta w telefonie (QR) w ciągu dnia → automatycznie zliczone i pogrupowane 
 | `/tablica/<id>` | prowadzący (PIN), rzutnik | rundy 1–5 (×1 ×1 ×1 ×2 ×3), odkrywanie, X, pule, finał ze stoperem |
 | `/tablica/<id>?pilot=1` | prowadzący, telefon | ten sam panel bez tablicy i bez dźwięku – steruje grą na rzutniku |
 | `/opinie` | uczestnik | anonimowa ankieta opinii o rekolekcjach (`?r=<nazwa>` – inne rekolekcje); moduł tymczasowy, do przeniesienia do innego projektu |
-| `/admin/opinie` | prowadzący (PIN) | zebrane opinie w tabeli, średnie ocen i NPS, eksport CSV; osobno lista kontaktów |
+| `/admin/opinie` | prowadzący (PIN) | opinie: przeglądanie ankiet jedna po drugiej, podsumowanie (najwyżej/najniżej ocenione, wszystkie odpowiedzi otwarte, podsumowanie AI na żądanie), tabela ze średnimi, kontakty, eksport CSV; filtr rekolekcji (`?r=`) |
+| `/admin/opinie/raport` | prowadzący (PIN) | raport graficzny dla organizatorów (liczby, oceny w obszarach, rozkłady, NPS) – „Drukuj / zapisz PDF”; `?otwarte=1` dołącza odpowiedzi otwarte |
 | `/` | – | tylko prośba o zeskanowanie kodu QR |
 
 Stack: Next.js 15 (App Router, TypeScript), Supabase (Postgres), Anthropic API (Claude) do grupowania, zwykły CSS.

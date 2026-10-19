@@ -43,3 +43,42 @@ export async function requestAiGrouping(question: string, uniques: UniqueAnswer[
   if (!parsed) throw new AiUnavailableError("Model zwrócił nieprawidłowy JSON.");
   return parsed.groups;
 }
+
+export const OpinionSummarySchema = z.object({
+  overview: z.string(),
+  takeaways: z.array(z.string()),
+  strengths: z.array(z.string()),
+  improvements: z.array(z.string()),
+  quotes: z.array(z.string()),
+});
+export type OpinionSummary = z.infer<typeof OpinionSummarySchema>;
+
+const SUMMARY_SYSTEM = `Opracowujesz anonimowe opinie uczestników rekolekcji dla małżeństw „Jedność małżeńska a finanse”
+dla prowadzących (Moniki i Dominika). Dostajesz średnie ocen (skala 1–5, NPS 1–10) i wszystkie odpowiedzi otwarte.
+Pisz po polsku, rzeczowo i życzliwie, bez lukrowania – prowadzący chcą wiedzieć, co poprawić.
+- overview: 3–5 zdań ogólnego obrazu, z liczbami tam, gdzie pomagają.
+- takeaways: co uczestnicy przeżyli i zabierają do domu – powtarzające się motywy (przy motywie w nawiasie, ilu mniej więcej o nim pisało).
+- strengths: co działało najlepiej (z ocen i z komentarzy).
+- improvements: konkretne propozycje zmian w wykładach i prowadzeniu, od najczęstszych; uwzględnij też nisko ocenione pozycje.
+- quotes: 3–6 najbardziej charakterystycznych cytatów dosłownie z odpowiedzi otwartych (bez zmian, bez danych osobowych).
+Nie wymyślaj niczego, czego nie ma w danych. Gdy danych jest mało, powiedz to wprost.`;
+
+/** Podsumowanie opinii przez Claude (wejście: gotowy tekst ze statystykami i odpowiedziami otwartymi). */
+export async function requestOpinionSummary(input: string): Promise<OpinionSummary> {
+  assert(input.trim() !== "", "requestOpinionSummary: empty input");
+  const apiKey = env.anthropicKey();
+  if (!apiKey) throw new AiUnavailableError("Brak klucza ANTHROPIC_API_KEY.");
+  const client = new Anthropic({ apiKey, timeout: 120_000, maxRetries: 1 });
+  const response = await client.messages.parse({
+    model: env.anthropicModel(),
+    max_tokens: 16000,
+    system: SUMMARY_SYSTEM,
+    output_config: { effort: "medium", format: zodOutputFormat(OpinionSummarySchema) },
+    messages: [{ role: "user", content: input }],
+  });
+  if (response.stop_reason === "refusal") throw new AiUnavailableError("Model odmówił podsumowania opinii.");
+  if (response.stop_reason === "max_tokens") throw new AiUnavailableError("Odpowiedź modelu została ucięta.");
+  const parsed = response.parsed_output;
+  if (!parsed) throw new AiUnavailableError("Model zwrócił nieprawidłowy JSON.");
+  return parsed;
+}
