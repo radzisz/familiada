@@ -1,6 +1,6 @@
 import { PinForm } from "@/components/PinForm";
 import { NpsChart, ScaleLegend, ScaleRow } from "@/components/opinions/OpinionCharts";
-import { PrintButton } from "@/components/opinions/PrintButton";
+import { PdfButton } from "@/components/opinions/PdfButton";
 import { OPINION_SURVEY } from "@/lib/opinions";
 import { buildReport, formatAvg, retreatsOf } from "@/lib/opinionsReport";
 import { isAdmin } from "@/lib/server/auth";
@@ -14,7 +14,7 @@ export const metadata = { title: "Raport – opinie o rekolekcjach" };
 
 /**
  * Raport graficzny dla organizatorów: liczby, oceny w sekcjach, NPS; odpowiedzi otwarte tylko po `?otwarte=1`.
- * Wysyła się go jako PDF (drukowanie → Zapisz jako PDF).
+ * „Pobierz PDF” ściąga ten sam raport jako plik A4 z /api/admin/opinie/raport.
  */
 export default async function OpinionReportPage({ searchParams }: { searchParams: Promise<{ r?: string; otwarte?: string }> }) {
   if (!(await isAdmin())) return <PinForm title="Raport – opinie o rekolekcjach" />;
@@ -28,6 +28,7 @@ export default async function OpinionReportPage({ searchParams }: { searchParams
   const branding = await loadOpinionBranding(db);
   const retreatLabel = retreat ?? (retreatsOf(rows).length === 1 ? retreatsOf(rows)[0] : null);
   const toggleHref = `/admin/opinie/raport?${new URLSearchParams({ ...(retreat ? { r: retreat } : {}), ...(withOpen ? {} : { otwarte: "1" }) })}`;
+  const pdfHref = `/api/admin/opinie/raport?${new URLSearchParams({ ...(retreat ? { r: retreat } : {}), ...(withOpen ? { otwarte: "1" } : {}) })}`;
   const nps = report.nps;
   const sectionsWithScales = report.sections.filter((s) => s.scales.length > 0);
 
@@ -36,7 +37,7 @@ export default async function OpinionReportPage({ searchParams }: { searchParams
       <div className="rp-tools">
         <a href={`/admin/opinie?widok=podsumowanie${retreat ? `&r=${encodeURIComponent(retreat)}` : ""}`}>← Opinie</a>
         <a href={toggleHref}>{withOpen ? "Bez odpowiedzi otwartych" : "Dołącz odpowiedzi otwarte"}</a>
-        <PrintButton />
+        <PdfButton href={pdfHref} />
       </div>
       <article className="rp-page">
         <header className="rp-head">

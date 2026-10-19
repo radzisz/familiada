@@ -2,7 +2,8 @@
 .rp { min-height: 100dvh; background: #EEF3F1; color: #14231f; font-family: var(--font-sans), Calibri, "Segoe UI", Arial, sans-serif; padding: 16px; }
 .rp-tools { max-width: 860px; margin: 0 auto 12px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
 .rp-tools a { color: #1F4A42; font-weight: 700; }
-.rp-print { margin-left: auto; background: #A97A3E; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+.rp-print { margin-left: auto; background: #A97A3E; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.rp-tools a.rp-print { color: #fff; }
 .rp-page { max-width: 860px; margin: 0 auto; background: #fff; border-radius: 14px; padding: 32px 36px; box-shadow: 0 2px 12px rgba(20, 35, 31, .08); }
 .rp h1, .rp h2, .rp h3 { font-family: var(--font-serif), Cambria, Georgia, serif; color: #1F4A42; margin: 0; }
 .rp h1 { font-size: 30px; line-height: 1.15; }
