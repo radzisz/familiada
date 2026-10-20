@@ -98,7 +98,12 @@
 .st-steps li { counter-increment: step; background: var(--st-card); border-radius: 18px; padding: 22px; border: 1px solid var(--st-line); }
 .st-steps li::before { content: counter(step); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--st-accent); color: #fff; font-weight: 800; margin-bottom: 12px; }
 .st-steps p { color: var(--st-muted); }
-@media (max-width: 760px) { .st-steps { grid-template-columns: 1fr; } }
+.st-steps.two { grid-template-columns: repeat(2, 1fr); }
+/* Etapy: numeracja kroków ciągnie się przez wszystkie etapy. */
+.st-stages { counter-reset: step; display: flex; flex-direction: column; gap: 28px; margin-top: 24px; }
+.st-stages .st-steps { counter-reset: none; margin-top: 12px; }
+.st-stage-title { color: var(--st-accent); text-transform: uppercase; letter-spacing: .06em; font-size: 14px; margin: 0; }
+@media (max-width: 760px) { .st-steps, .st-steps.two { grid-template-columns: 1fr; } }
 
 .st-tags { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .st-tags li { padding: 8px 16px; border-radius: 999px; background: var(--st-card); border: 1px solid var(--st-line); font-weight: 600; color: var(--st-green); }

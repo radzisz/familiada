@@ -26,7 +26,9 @@ export interface Tool {
   moment: string;
   hero: { title: string; lead: string };
   features: ToolFeature[];
-  steps: ToolFeature[];
+  steps?: ToolFeature[];
+  /** Kroki pogrupowane w etapy (np. przygotowanie i gra) – zastępują `steps` w „Jak to działa”. */
+  stages?: { title: string; steps: ToolFeature[] }[];
   audience: string[];
   faq: { q: string; a: string }[];
 }
@@ -41,21 +43,33 @@ export const TOOLS: Tool[] = [
     hero: {
       title: "Familiada z odpowiedziami Twojej grupy",
       lead:
-        "W ciągu dnia uczestnicy odpowiadają na pytania w telefonie, wieczorem gracie na rzutniku. " +
-        "Odpowiedzi same się policzą i pogrupują – bez kartek i bez liczenia do północy.",
+        "Przygotowujesz pytania – własne albo z pomocą AI – i pytasz o nie uczestników przez telefon. " +
+        "Odpowiedzi same się policzą i pogrupują, a potem gracie jak w telewizji: tablica na rzutniku, pilot w Twoim telefonie.",
     },
     features: [
-      { title: "Ankieta przez kod QR", text: "Uczestnicy skanują kod i odpowiadają w telefonie. Bez aplikacji i bez zakładania kont." },
-      { title: "Liczy i grupuje za Ciebie", text: "„Pieniądze”, „kasa” i „pieniadze” trafią do jednej odpowiedzi. Sztuczna inteligencja łączy synonimy i literówki." },
-      { title: "Prawdziwa tablica", text: "Tablica jak w telewizji, z punktami, błędami, pulą i finałem ze stoperem. Wyświetlasz ją na rzutniku albo telewizorze." },
+      { title: "Pytania własne lub z AI", text: "Wpisujesz swoje pytania albo wybierasz temat, a AI proponuje pytania – pod rekolekcje, wyjazd czy integrację." },
+      { title: "Plakat z kodem QR", text: "Platforma generuje plakat do wydrukowania i link do wysłania. Uczestnicy odpowiadają w telefonie, bez aplikacji i kont." },
+      { title: "Liczy i grupuje za Ciebie", text: "„Pieniądze”, „kasa” i „pieniadze” trafią do jednej odpowiedzi. AI łączy synonimy i literówki, a Ty możesz poprawić grupy ręcznie." },
+      { title: "Brakuje odpowiedzi? Dogeneruj", text: "Gdy na pytanie odpowiedziało niewiele osób, AI podpowie dodatkowe odpowiedzi, żeby tablica była pełna." },
+      { title: "Prawdziwa tablica", text: "Rozgrywka jak w telewizji: rundy, punkty, błędy, pula i finał ze stoperem. Wyświetlasz ją na rzutniku albo telewizorze." },
       { title: "Pilot w telefonie", text: "Prowadzisz grę z telefonu: odkrywasz odpowiedzi, dajesz błędy, przechodzisz do kolejnej rundy." },
-      { title: "Własne pytania", text: "Gotowy zestaw pytań na start albo Twoje własne – pod temat rekolekcji, wyjazdu czy integracji." },
-      { title: "Twoja oprawa", text: "Nazwa wydarzenia i logo organizatora na tablicy i w ankiecie." },
     ],
-    steps: [
-      { title: "Rano", text: "Wyświetlasz kod QR, uczestnicy odpowiadają na kilkanaście krótkich pytań." },
-      { title: "Po południu", text: "Odpowiedzi są już policzone. Wybierasz pytania do rund i finału – ręcznie albo jednym kliknięciem." },
-      { title: "Wieczorem", text: "Dzielisz salę na drużyny i gracie. Ty masz pilota w telefonie, wszyscy patrzą na tablicę." },
+    stages: [
+      {
+        title: "Etap I – przygotowanie",
+        steps: [
+          { title: "Pytania", text: "Wpisujesz własne pytania albo wybierasz temat i generujesz je przez AI." },
+          { title: "Pytasz uczestników", text: "Wieszasz plakat z kodem QR wygenerowany przez platformę albo wysyłasz uczestnikom link. Odpowiadają w telefonie." },
+          { title: "Opracowujesz odpowiedzi", text: "AI grupuje podobne odpowiedzi, Ty możesz to poprawić ręcznie. Jeśli odpowiedzi jest mało – dogenerujesz dodatkowe." },
+        ],
+      },
+      {
+        title: "Etap II – gra",
+        steps: [
+          { title: "Tablica na rzutniku", text: "Gracie zgodnie z oryginalnym, telewizyjnym scenariuszem: drużyny, rundy, pula i finał. Wszyscy patrzą na tablicę." },
+          { title: "Pilot w telefonie", text: "Ty prowadzisz grę z aplikacji w telefonie – odkrywasz odpowiedzi, liczysz błędy i przełączasz rundy." },
+        ],
+      },
     ],
     audience: ["rekolekcje i dni skupienia", "obozy, kolonie i wyjazdy", "integracje firmowe", "wesela i rodzinne zjazdy"],
     faq: [

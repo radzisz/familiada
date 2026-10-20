@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ContactTopic } from "@/lib/contact";
-import { TOOLS, toolBySlug, type ToolSlug } from "@/lib/site";
+import { TOOLS, toolBySlug, type ToolFeature, type ToolSlug } from "@/lib/site";
 import { ContactForm } from "./ContactForm";
 import { ToolVisual } from "./ToolVisual";
 
@@ -42,14 +42,18 @@ export function ToolPage({ slug }: { slug: ToolSlug }) {
       <section className="st-section alt" id="jak">
         <div className="st-wrap">
           <h2>Jak to działa</h2>
-          <ol className="st-steps">
-            {tool.steps.map((s) => (
-              <li key={s.title}>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
-              </li>
-            ))}
-          </ol>
+          {tool.stages ? (
+            <div className="st-stages">
+              {tool.stages.map((stage) => (
+                <div key={stage.title}>
+                  <h3 className="st-stage-title">{stage.title}</h3>
+                  <Steps steps={stage.steps} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Steps steps={tool.steps ?? []} />
+          )}
         </div>
       </section>
 
@@ -85,6 +89,19 @@ export function ToolPage({ slug }: { slug: ToolSlug }) {
 
       <ContactSection topic={slug} source={slug} />
     </main>
+  );
+}
+
+function Steps({ steps }: { steps: ToolFeature[] }) {
+  return (
+    <ol className={`st-steps${steps.length === 2 ? " two" : ""}`}>
+      {steps.map((s) => (
+        <li key={s.title}>
+          <h3>{s.title}</h3>
+          <p>{s.text}</p>
+        </li>
+      ))}
+    </ol>
   );
 }
 
