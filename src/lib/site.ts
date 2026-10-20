@@ -6,7 +6,7 @@
 export const PLATFORM = {
   name: "Animatornia",
   domain: "animatornia.pl",
-  tagline: "Narzędzia dla prowadzących wydarzenia, wyjazdy i rekolekcje",
+  tagline: "Katalog narzędzi dla prowadzących wydarzenia, wyjazdy i rekolekcje",
 } as const;
 
 export type ToolSlug = "familiada" | "ankiety" | "spiewnik";
@@ -131,4 +131,50 @@ export function toolBySlug(slug: ToolSlug): Tool {
   const tool = TOOLS.find((t) => t.slug === slug);
   if (!tool) throw new Error(`Nieznane narzędzie: ${slug}`);
   return tool;
+}
+
+/**
+ * Katalog narzędzi: nasze (landing w Animatorni) i polecane cudze (link na zewnątrz).
+ * Kolejność kategorii = kolejność sekcji na `/narzedzia`.
+ */
+export const CATEGORIES = [
+  { slug: "gry", name: "Gry i integracja", text: "Quizy, gry na rzutniku i zabawy, w których bierze udział cała sala." },
+  { slug: "opinie", name: "Ankiety i opinie", text: "Pytania do uczestników w trakcie i po wydarzeniu, głosowania, raporty." },
+  { slug: "spiew", name: "Śpiew i modlitwa", text: "Teksty pieśni, akordy i modlitwa we wspólnocie." },
+  { slug: "organizacja", name: "Zapisy i organizacja", text: "Zapisy uczestników, płatności, terminy i logistyka wyjazdu." },
+  { slug: "materialy", name: "Materiały i grafika", text: "Plakaty, zaproszenia, identyfikatory i materiały na zajęcia." },
+] as const;
+
+export type CategorySlug = (typeof CATEGORIES)[number]["slug"];
+
+export interface CatalogEntry {
+  name: string;
+  category: CategorySlug;
+  short: string;
+  /** Nasze narzędzie – prowadzi na jego landing. */
+  tool?: ToolSlug;
+  /** Polecane narzędzie spoza Animatorni. */
+  url?: string;
+}
+
+export const CATALOG: CatalogEntry[] = [
+  ...TOOLS.map((t): CatalogEntry => ({
+    name: t.name,
+    short: t.short,
+    tool: t.slug,
+    category: ({ familiada: "gry", ankiety: "opinie", spiewnik: "spiew" } as const)[t.slug],
+  })),
+  { name: "Kahoot!", category: "gry", url: "https://kahoot.com", short: "Quizy na żywo – pytania na ekranie, uczestnicy odpowiadają w telefonach na czas." },
+  { name: "Wordwall", category: "gry", url: "https://wordwall.net/pl", short: "Gotowe szablony gier i ćwiczeń: koło fortuny, krzyżówki, dopasowania." },
+  { name: "Mentimeter", category: "opinie", url: "https://www.mentimeter.com", short: "Pytania do sali z wynikami na żywo: chmura słów, skale, głosowania." },
+  { name: "Slido", category: "opinie", url: "https://www.slido.com", short: "Pytania od uczestników do prelegenta i szybkie sondy podczas spotkania." },
+  { name: "Formularze Google", category: "opinie", url: "https://www.google.com/forms/about/", short: "Proste formularze i ankiety z wynikami w arkuszu." },
+  { name: "Brewiarz.pl", category: "spiew", url: "https://brewiarz.pl", short: "Liturgia godzin i czytania na każdy dzień – w telefonie i do wyświetlenia na rzutniku." },
+  { name: "CampsFlow", category: "organizacja", url: "https://campsflow.pl", short: "Zapisy i rezerwacje na obozy, kolonie i wyjazdy: formularze, płatności, umowy, listy uczestników." },
+  { name: "Doodle", category: "organizacja", url: "https://doodle.com", short: "Wybór terminu spotkania, który pasuje większości." },
+  { name: "Canva", category: "materialy", url: "https://www.canva.com", short: "Plakaty, zaproszenia i grafiki do mediów społecznościowych z gotowych szablonów." },
+];
+
+export function catalogByCategory(slug: CategorySlug): CatalogEntry[] {
+  return CATALOG.filter((e) => e.category === slug);
 }

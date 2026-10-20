@@ -79,6 +79,7 @@ export function ToolPage({ slug }: { slug: ToolSlug }) {
           <div className="st-tools">
             {others.map((t) => <ToolCard key={t.slug} slug={t.slug} />)}
           </div>
+          <p className="st-catalog-link"><Link href="/narzedzia">Zobacz cały katalog narzędzi →</Link></p>
         </div>
       </section>
 

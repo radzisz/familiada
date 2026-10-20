@@ -19,8 +19,9 @@ export function SiteHeader() {
     <header className="st-header">
       <div className="st-wrap st-header-in">
         <Logo />
-        <nav className="st-nav" aria-label="Narzędzia">
-          {TOOLS.map((t) => <Link key={t.slug} href={`/${t.slug}`}>{t.name}</Link>)}
+        <nav className="st-nav" aria-label="Menu">
+          <Link href="/narzedzia">Katalog narzędzi</Link>
+          <Link href="/wspolpraca">Współpraca</Link>
         </nav>
         <a className="st-btn small" href="#kontakt">Napisz do nas</a>
       </div>
@@ -36,13 +37,16 @@ export function SiteFooter() {
           <Logo />
           <p>{PLATFORM.tagline}.</p>
         </div>
-        <nav aria-label="Narzędzia w stopce">
-          <p className="st-footer-h">Narzędzia</p>
+        <nav aria-label="Nasze narzędzia">
+          <p className="st-footer-h">Nasze narzędzia</p>
           {TOOLS.map((t) => <Link key={t.slug} href={`/${t.slug}`}>{t.name}{t.soon ? " (wkrótce)" : ""}</Link>)}
+          <Link href="/narzedzia">Cały katalog</Link>
         </nav>
         <nav aria-label="Kontakt">
           <p className="st-footer-h">Kontakt</p>
           <a href="#kontakt">Napisz do nas</a>
+          <Link href="/wspolpraca">Współpraca</Link>
+          <Link href="/wspolpraca#zglos">Zgłoś narzędzie</Link>
           <Link href="/admin">Panel prowadzącego</Link>
         </nav>
       </div>

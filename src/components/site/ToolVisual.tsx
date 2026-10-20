@@ -58,16 +58,6 @@ export function SurveyPhone() {
   );
 }
 
-/** Strona główna: tablica Familiady z telefonem uczestnika – „telefony i rzutnik” w jednym obrazku. */
-export function HeroCollage() {
-  return (
-    <div className="st-collage">
-      <ToolVisual slug="familiada" />
-      <div className="st-collage-phone"><SurveyPhone /></div>
-    </div>
-  );
-}
-
 const SONG: [string, string][] = [
   ["G          D", "Idziemy razem drogą"],
   ["e          C", "przez góry i doliny,"],

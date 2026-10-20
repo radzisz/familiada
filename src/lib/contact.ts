@@ -7,6 +7,8 @@ export const CONTACT_TOPICS = [
   { value: "ankiety", label: "Ankiety i opinie" },
   { value: "spiewnik", label: "Śpiewnik" },
   { value: "pakiet", label: "Kilka narzędzi na jedno wydarzenie" },
+  { value: "narzedzie", label: "Zgłoszenie narzędzia do katalogu" },
+  { value: "wspolpraca", label: "Współpraca" },
   { value: "inne", label: "Coś innego" },
 ] as const;
 
@@ -45,4 +47,30 @@ export function isBot(c: ContactRequest): boolean {
 
 export function topicLabel(value: string): string {
   return CONTACT_TOPICS.find((t) => t.value === value)?.label ?? value;
+}
+
+/** Zgłoszenie narzędzia do katalogu (`/wspolpraca`) – zapisywane jako zapytanie z tematem „narzedzie”. */
+export interface ToolSubmission {
+  toolName: string;
+  url: string;
+  category: string;
+  /** Autor zgłasza własne narzędzie albo poleca cudze. */
+  own: boolean;
+  description: string;
+}
+
+export function toolSubmissionError(t: ToolSubmission): string | null {
+  if (!t.toolName.trim()) return "Wpisz nazwę narzędzia.";
+  return null;
+}
+
+export function toolSubmissionMessage(t: ToolSubmission): string {
+  const lines = [
+    `Narzędzie: ${t.toolName.trim()}`,
+    t.url.trim() && `Adres: ${t.url.trim()}`,
+    t.category && `Kategoria: ${t.category}`,
+    t.own ? "Zgłasza autor narzędzia" : "Polecenie cudzego narzędzia",
+    t.description.trim() && `\n${t.description.trim()}`,
+  ];
+  return lines.filter(Boolean).join("\n").slice(0, CONTACT_LIMITS.message);
 }

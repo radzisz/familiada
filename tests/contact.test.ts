@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contactRequestError, isBot, topicLabel, type ContactRequest } from "@/lib/contact";
+import { contactRequestError, isBot, toolSubmissionError, toolSubmissionMessage, topicLabel, type ContactRequest } from "@/lib/contact";
 
 const base: ContactRequest = {
   topic: "familiada", name: "", email: "jan@example.com", organization: "", message: "", consent: true, source: "home", website: "",
@@ -20,5 +20,15 @@ describe("contact", () => {
   it("nazwa tematu po polsku", () => {
     expect(topicLabel("spiewnik")).toBe("Śpiewnik");
     expect(topicLabel("xyz")).toBe("xyz");
+  });
+
+  it("zgłoszenie narzędzia składa się w czytelną wiadomość", () => {
+    const t = { toolName: " Kahoot! ", url: "https://kahoot.com", category: "Gry i integracja", own: false, description: "Quizy." };
+    expect(toolSubmissionError(t)).toBeNull();
+    expect(toolSubmissionError({ ...t, toolName: " " })).toMatch(/nazwę/);
+    expect(toolSubmissionMessage(t)).toBe(
+      "Narzędzie: Kahoot!\nAdres: https://kahoot.com\nKategoria: Gry i integracja\nPolecenie cudzego narzędzia\n\nQuizy.",
+    );
+    expect(toolSubmissionMessage({ ...t, url: "", description: "", own: true })).not.toMatch(/Adres/);
   });
 });
