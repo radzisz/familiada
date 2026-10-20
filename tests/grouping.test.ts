@@ -38,12 +38,13 @@ describe("reconcileAiGroups", () => {
       { label: "Kawa", members: ["kawa"] },
     ]);
   });
-  it("drops unknown and duplicated members, adds missing ones as own groups", () => {
+  it("drops unknown and duplicated members, adds missing ones, merges groups with the same label", () => {
     const result = reconcileAiGroups(
       [{ label: "Ubrania", members: ["ciuchy", "nieznane", "ciuchy"] }, { label: "Puste", members: ["ciuchy"] }],
       uniques,
     );
-    expect(result.map((g) => g.label)).toEqual(["Ubrania", "Bluzki", "Kawa", "Ubrania"]);
+    expect(result.map((g) => g.label)).toEqual(["Ubrania", "Bluzki", "Kawa"]);
+    expect(result[0]!.members).toEqual(["ciuchy", "ubrania"]);
     expect(result.flatMap((g) => g.members).sort()).toEqual(["bluzki", "ciuchy", "kawa", "ubrania"]);
   });
   it("handles an empty AI response", () => {

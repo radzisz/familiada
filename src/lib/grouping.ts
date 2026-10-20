@@ -1,5 +1,5 @@
 import { assert } from "./assert";
-import { labelFromRaw } from "./normalize";
+import { labelFromRaw, normalizeAnswer } from "./normalize";
 import type { ScoringAnswer } from "./scoring";
 
 export interface UniqueAnswer {
@@ -66,6 +66,7 @@ export function clampLabel(label: string): string {
 /**
  * Walidacja odpowiedzi AI: każdy `normalized` w dokładnie jednej grupie.
  * Nieznane i powtórzone pozycje są pomijane, brakujące trafiają do osobnych grup.
+ * Grupy o tej samej etykiecie (po normalizacji) są scalane – inaczej na tablicy byłyby dwie takie same odpowiedzi.
  */
 export function reconcileAiGroups(aiGroups: PlannedGroup[], uniques: UniqueAnswer[]): PlannedGroup[] {
   const known = new Map(uniques.map((u) => [u.normalized, u]));
@@ -78,8 +79,20 @@ export function reconcileAiGroups(aiGroups: PlannedGroup[], uniques: UniqueAnswe
   const leftovers = uniques
     .filter((u) => !assigned.has(u.normalized))
     .map((u) => ({ label: clampLabel(labelFromRaw(u.sampleRaw)), members: [u.normalized] }));
-  const result = [...fromAi.filter((g) => g.members.length > 0), ...leftovers];
+  const result = mergeSameLabels([...fromAi.filter((g) => g.members.length > 0), ...leftovers]);
   const total = result.reduce((sum, g) => sum + g.members.length, 0);
   assert(total === uniques.length, "reconcileAiGroups: every answer in exactly one group");
   return result;
+}
+
+/** Scala grupy o tej samej etykiecie po normalizacji („Ubrania” i „ubrania!”); zostaje etykieta pierwszej. */
+function mergeSameLabels(groups: PlannedGroup[]): PlannedGroup[] {
+  const byLabel = new Map<string, PlannedGroup>();
+  groups.forEach((g) => {
+    const key = normalizeAnswer(g.label);
+    const existing = byLabel.get(key);
+    if (existing) existing.members.push(...g.members);
+    else byLabel.set(key, { label: g.label, members: [...g.members] });
+  });
+  return [...byLabel.values()];
 }

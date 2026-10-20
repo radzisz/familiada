@@ -14,6 +14,8 @@ const SYSTEM = `Grupujesz odpowiedzi z ankiety do gry „Familiada” na rekolek
 Połącz w jedną grupę odpowiedzi znaczące to samo: synonimy, liczbę mnogą i pojedynczą, literówki,
 zdrobnienia i szczegółowe przykłady tej samej kategorii (np. „ciuchy”, „ubrania”, „bluzki” → „Ubrania”).
 Nie łącz odpowiedzi, które na tablicy byłyby różnymi odpowiedziami.
+Każda grupa ma inną etykietę – nie twórz dwóch grup o tym samym lub bardzo podobnym znaczeniu.
+Każdy ciąg z listy musi trafić do jakiejś grupy (pojedyncza odpowiedź też może być grupą).
 Etykieta: po polsku, 1–3 słowa, z wielkiej litery, krótka i czytelna z daleka.
 W polu members wpisz dokładnie te ciągi z pola "n", które należą do grupy. Każdy ciąg dokładnie raz.`;
 
