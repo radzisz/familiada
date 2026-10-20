@@ -8,7 +8,7 @@ import { pageMetadata } from "@/lib/siteMetadata";
 export const metadata: Metadata = pageMetadata(
   "/narzedzia",
   `Katalog narzędzi – ${PLATFORM.name}`,
-  "Sprawdzone narzędzia dla prowadzących wydarzenia: gry i quizy, ankiety, śpiewniki, zapisy na wyjazdy i materiały.",
+  "Sprawdzone narzędzia dla prowadzących wydarzenia: gry i quizy, ankiety, śpiewniki, zapisy na wyjazdy – nasze i polecane.",
 );
 
 export default function CatalogPage() {

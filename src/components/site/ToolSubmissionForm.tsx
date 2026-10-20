@@ -5,11 +5,10 @@ import { postJson } from "@/lib/client/api";
 import {
   CONTACT_CONSENT, CONTACT_LIMITS, contactRequestError, toolSubmissionError, toolSubmissionMessage, type ToolSubmission,
 } from "@/lib/contact";
-import { CATEGORIES } from "@/lib/site";
 
 /** „Zgłoś narzędzie” na `/wspolpraca` – trafia do zapytań ze strony z tematem „narzedzie”. */
 export function ToolSubmissionForm() {
-  const [tool, setTool] = useState<ToolSubmission>({ toolName: "", url: "", category: "", own: true, description: "" });
+  const [tool, setTool] = useState<ToolSubmission>({ toolName: "", url: "", own: true, description: "" });
   const [contact, setContact] = useState({ name: "", email: "", consent: false, website: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -58,14 +57,6 @@ export function ToolSubmissionForm() {
           <input type="url" value={tool.url} maxLength={300} placeholder="https://" onChange={(e) => setT("url", e.target.value)} />
         </label>
       </div>
-      <label className="st-field">
-        <span>Kategoria</span>
-        <select value={tool.category} onChange={(e) => setT("category", e.target.value)}>
-          <option value="">Wybierz…</option>
-          {CATEGORIES.map((c) => <option key={c.slug} value={c.name}>{c.name}</option>)}
-          <option value="Inna">Inna</option>
-        </select>
-      </label>
       <label className="st-field">
         <span>Do czego się przydaje?</span>
         <textarea rows={4} value={tool.description} maxLength={2000}

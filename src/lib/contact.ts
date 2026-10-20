@@ -53,7 +53,6 @@ export function topicLabel(value: string): string {
 export interface ToolSubmission {
   toolName: string;
   url: string;
-  category: string;
   /** Autor zgłasza własne narzędzie albo poleca cudze. */
   own: boolean;
   description: string;
@@ -68,7 +67,6 @@ export function toolSubmissionMessage(t: ToolSubmission): string {
   const lines = [
     `Narzędzie: ${t.toolName.trim()}`,
     t.url.trim() && `Adres: ${t.url.trim()}`,
-    t.category && `Kategoria: ${t.category}`,
     t.own ? "Zgłasza autor narzędzia" : "Polecenie cudzego narzędzia",
     t.description.trim() && `\n${t.description.trim()}`,
   ];

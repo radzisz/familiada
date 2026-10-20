@@ -23,11 +23,11 @@ describe("contact", () => {
   });
 
   it("zgłoszenie narzędzia składa się w czytelną wiadomość", () => {
-    const t = { toolName: " Kahoot! ", url: "https://kahoot.com", category: "Gry i integracja", own: false, description: "Quizy." };
+    const t = { toolName: " Kahoot! ", url: "https://kahoot.com", own: false, description: "Quizy." };
     expect(toolSubmissionError(t)).toBeNull();
     expect(toolSubmissionError({ ...t, toolName: " " })).toMatch(/nazwę/);
     expect(toolSubmissionMessage(t)).toBe(
-      "Narzędzie: Kahoot!\nAdres: https://kahoot.com\nKategoria: Gry i integracja\nPolecenie cudzego narzędzia\n\nQuizy.",
+      "Narzędzie: Kahoot!\nAdres: https://kahoot.com\nPolecenie cudzego narzędzia\n\nQuizy.",
     );
     expect(toolSubmissionMessage({ ...t, url: "", description: "", own: true })).not.toMatch(/Adres/);
   });

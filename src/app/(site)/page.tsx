@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CategoryTiles } from "@/components/site/Catalog";
-import { ContactSection, ToolCard } from "@/components/site/ToolPage";
-import { CATALOG, PLATFORM, TOOLS } from "@/lib/site";
+import { Catalog } from "@/components/site/Catalog";
+import { ContactSection } from "@/components/site/ToolPage";
+import { CATALOG, PLATFORM } from "@/lib/site";
 import { pageMetadata } from "@/lib/siteMetadata";
 
 export const metadata: Metadata = pageMetadata(
@@ -31,37 +31,28 @@ export default function HomePage() {
           <p className="st-eyebrow">{PLATFORM.name}</p>
           <h1>Katalog narzędzi<br />dla prowadzących wydarzenia</h1>
           <p className="st-lead">
-            Gry na rzutniku, ankiety, śpiewniki, zapisy na wyjazdy, materiały. Zbieramy narzędzia, które sprawdzają się
+            Gry na rzutniku, ankiety, śpiewniki, zapisy na wyjazdy. Zbieramy narzędzia, które sprawdzają się
             na rekolekcjach, obozach i spotkaniach – część tworzymy sami, resztę polecamy. Już {CATALOG.length} w katalogu.
           </p>
           <div className="st-actions">
-            <Link className="st-btn primary" href="/narzedzia">Przeglądaj katalog</Link>
+            <Link className="st-btn primary" href="#narzedzia">Przeglądaj katalog</Link>
             <Link className="st-btn ghost" href="/wspolpraca#zglos">Zgłoś narzędzie</Link>
           </div>
         </div>
       </section>
 
-      <section className="st-section st-section-tight">
+      <section className="st-section st-section-tight" id="narzedzia">
         <div className="st-wrap">
-          <h2>Czego szukasz?</h2>
-          <CategoryTiles />
-        </div>
-      </section>
-
-      <section className="st-section alt" id="nasze">
-        <div className="st-wrap">
-          <h2>Tworzymy też własne</h2>
+          <h2>Narzędzia</h2>
           <p className="st-sub">
-            Tam, gdzie brakowało nam dobrego narzędzia, zrobiliśmy je sami. Uczestnicy używają własnych telefonów –
-            bez aplikacji i bez kont. Płacisz raz, za wydarzenie.
+            Nasze działają na telefonach uczestników – bez aplikacji i bez kont – a płacisz raz, za wydarzenie.
+            Polecane to sprawdzone narzędzia innych twórców.
           </p>
-          <div className="st-tools">
-            {TOOLS.map((t) => <ToolCard key={t.slug} slug={t.slug} />)}
-          </div>
+          <Catalog />
         </div>
       </section>
 
-      <section className="st-section">
+      <section className="st-section alt">
         <div className="st-wrap">
           <h2>Dla kogo</h2>
           <div className="st-grid four">
