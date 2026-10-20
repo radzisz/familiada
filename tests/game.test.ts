@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finalTotal, gameReducer, initialGameState, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState, WRONG, FINAL_SECONDS, finalNextHint, finalPerson, finalQuestionOnBoard, FINAL_DONE, shownFinalTotal } from "@/lib/game";
+import { finalTotal, gameReducer, initialGameState, leader, MAX_HISTORY, nextStep, NONE, parseGameState, potValue, QUESTION_COUNTDOWN_S, type GameState, WRONG, FINAL_SECONDS, finalNextHint, finalPerson, finalQuestionOnBoard, FINAL_DONE, shownFinalTotal } from "@/lib/game";
 
 const answers = [{ label: "A", points: 40 }, { label: "B", points: 30 }, { label: "C", points: 20 }];
 /** Stan startowy z drużyną Żon przy odpowiadaniu (błędy trafiają do niej). */
@@ -52,9 +52,19 @@ describe("gameReducer – rounds", () => {
     const s = run({ ...initialGameState(), round: 2, questionShown: true, strikes: { w: 2, h: 1 }, revealed: [0] }, { type: "next", answers, now: 1000 });
     expect(s).toMatchObject({ view: "game", round: 3, strikes: { w: 0, h: 0 }, revealed: [] });
   });
-  it("next after round 5 switches to the final and keeps scores", () => {
-    const s = run({ ...initialGameState(), round: 5, questionShown: true, scoreW: 120, revealed: [0, 1] }, { type: "next", answers, now: 1000 });
-    expect(s).toMatchObject({ view: "final", round: 5, scoreW: 120 });
+  it("next after round 5 shows the summary, then the final, keeping scores", () => {
+    const summary = run({ ...initialGameState(), round: 5, questionShown: true, scoreW: 120, revealed: [0, 1] }, { type: "next", answers, now: 1000 });
+    expect(summary).toMatchObject({ view: "summary", round: 5, scoreW: 120 });
+    expect(run(summary, { type: "next", answers, now: 2000 })).toMatchObject({ view: "final", scoreW: 120 });
+    expect(gameReducer(summary, { type: "undo" }).view).toBe("game");
+  });
+  it("leader is the team with more points, null on a tie", () => {
+    expect(leader({ ...initialGameState(), scoreW: 120, scoreH: 90 })).toBe("w");
+    expect(leader({ ...initialGameState(), scoreW: 10, scoreH: 90 })).toBe("h");
+    expect(leader({ ...initialGameState(), scoreW: 50, scoreH: 50 })).toBeNull();
+  });
+  it("parseGameState keeps the summary view", () => {
+    expect(parseGameState({ view: "summary" }).view).toBe("summary");
   });
   it("next in the final changes nothing", () => {
     const start = { ...initialGameState(), view: "final" as const, round: 5 };
@@ -269,7 +279,8 @@ describe("gameReducer – question reveal (Dalej pokazuje pytanie)", () => {
     const base = initialGameState();
     expect(nextStep(base)).toBe("question");
     expect(nextStep({ ...base, questionShown: true })).toBe("round");
-    expect(nextStep({ ...base, round: 5, questionShown: true })).toBe("final");
+    expect(nextStep({ ...base, round: 5, questionShown: true })).toBe("summary");
+    expect(nextStep({ ...base, view: "summary" })).toBe("final");
     expect(nextStep({ ...base, view: "final" })).toBeNull();
   });
   it("parseGameState treats a saved state without the flag as already shown", () => {

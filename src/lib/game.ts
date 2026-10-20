@@ -18,8 +18,8 @@ export type Person = "p1" | "p2";
 export interface GameState {
   /** Rośnie przy każdej zmianie; wyższy numer wygrywa przy synchronizacji urządzeń. */
   rev: number;
-  /** „thanks” – ekran końcowy z logami organizatorów po finale. */
-  view: "game" | "final" | "thanks";
+  /** „summary” – wyniki drużyn i zwycięzca po rundach, przed finałem; „thanks” – ekran końcowy po finale. */
+  view: "game" | "summary" | "final" | "thanks";
   /** false = ekran startowy na tablicy; „Start” na pilocie zaczyna grę od rundy 1. */
   started: boolean;
   round: number;
@@ -134,23 +134,34 @@ export function isShown(state: GameState, index: number): boolean {
   return state.revealed.includes(index) || state.uncovered.includes(index);
 }
 
-export type NextStep = "question" | "round" | "final";
+export type NextStep = "question" | "round" | "summary" | "final";
 
-/** Co zrobi „Dalej”: pokaże pytanie, przejdzie do kolejnego pytania albo do finału (null = w finale nic). */
+/** Co zrobi „Dalej”: pokaże pytanie, następne pytanie, podsumowanie rund albo finał (null = w finale nic). */
 export function nextStep(state: GameState): NextStep | null {
-  if (state.view === "final") return null;
+  if (state.view === "summary") return "final";
+  if (state.view !== "game") return null;
   if (!state.questionShown) return "question";
-  return state.round >= ROUND_COUNT ? "final" : "round";
+  return state.round >= ROUND_COUNT ? "summary" : "round";
 }
 
-/** „Dalej”: najpierw odsłania pytanie; potem przyznaje nieprzyznaną pulę i idzie do kolejnej rundy albo finału. */
+/**
+ * „Dalej”: najpierw odsłania pytanie; potem przyznaje nieprzyznaną pulę i idzie do kolejnej rundy,
+ * a po ostatniej – do podsumowania ze zwycięzcą; z podsumowania do finału.
+ */
 function next(state: GameState, answers: BoardAnswer[], now: number): GameState {
   const step = nextStep(state);
   if (step === null) return state;
+  if (step === "final") return { ...state, view: "final" };
   if (step === "question") return { ...state, questionShown: true, questionEndsAt: now + QUESTION_COUNTDOWN_S * 1000 };
   const done = awardToTurn(state, answers);
-  if (state.round >= ROUND_COUNT) return { ...done, view: "final" };
+  if (step === "summary") return { ...done, view: "summary" };
   return freshRound(done, state.round + 1);
+}
+
+/** Drużyna z większą liczbą punktów po rundach (null = remis). */
+export function leader(state: GameState): Team | null {
+  if (state.scoreW === state.scoreH) return null;
+  return state.scoreW > state.scoreH ? "w" : "h";
 }
 
 /** Trafiona odpowiedź – liczy się do puli, więc musi być wybrana drużyna, która odpowiada. */
@@ -352,7 +363,7 @@ export function parseGameState(raw: unknown): GameState {
     Array.isArray(v) && v.length === len && v.every((x) => Number.isInteger(x)) ? (v as number[]) : null;
   return {
     rev: Number.isInteger(r.rev) ? r.rev! : 0,
-    view: r.view === "final" || r.view === "thanks" ? r.view : "game",
+    view: r.view === "summary" || r.view === "final" || r.view === "thanks" ? r.view : "game",
     // Zapis sprzed tej flagi to gra w toku – ekranu startowego już nie pokazujemy.
     started: typeof r.started === "boolean" ? r.started : true,
     round: Number.isInteger(r.round) && r.round! >= 1 && r.round! <= ROUND_COUNT ? r.round! : 1,

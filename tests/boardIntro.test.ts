@@ -11,8 +11,9 @@ describe("introFor – plansza z rzepkami tylko przy przejściu do przodu", () =
   it("shows the round 1 intro when the game starts from the start screen", () => {
     expect(introFor(at({ started: false }), at({ started: true }))).toEqual({ kind: "round", round: 1 });
   });
-  it("shows the final intro when the game moves from rounds to the final", () => {
-    expect(introFor(at({ round: 5 }), at({ round: 5, view: "final" }))).toEqual({ kind: "final" });
+  it("shows the final intro when the game moves from the summary to the final", () => {
+    expect(introFor(at({ round: 5, view: "summary" }), at({ round: 5, view: "final" }))).toEqual({ kind: "final" });
+    expect(introFor(at({ round: 5 }), at({ round: 5, view: "summary" }))).toBeNull();
   });
   it("stays quiet when coming back from the thanks screen to the final", () => {
     expect(introFor(at({ view: "thanks" }), at({ view: "final" }))).toBeNull();

@@ -70,7 +70,7 @@ export function GameView({ state, board, fx, sound, hideHost, pilot, dispatch, o
   );
 }
 
-const TEAM_NAME = { w: "ŻONY", h: "MĘŻOWIE" } as const;
+export const TEAM_NAME = { w: "ŻONY", h: "MĘŻOWIE" } as const;
 
 /** Kolumna błędów drużyny przy krawędzi tablicy: trzy „lampki X”, zapalone tyle, ile drużyna ma błędów. */
 function StrikeColumn({ team, count }: { team: "w" | "h"; count: number }) {
@@ -89,7 +89,7 @@ function questionText(question: BoardQuestion | null, shown: boolean): string {
   return shown ? question.text : " ";
 }
 
-const NEXT_HINT: Record<NextStep, string> = { question: "pokaż pytanie", round: "następne pytanie", final: "finał" };
+const NEXT_HINT: Record<NextStep, string> = { question: "pokaż pytanie", round: "następne pytanie", summary: "podsumowanie", final: "finał" };
 
 /** Wynik drużyny; drużyna, która teraz odpowiada (ma pulę), jest podświetlona. */
 interface TeamScoreProps {
@@ -280,9 +280,8 @@ export function UndoButton({ state, dispatch }: { state: GameState; dispatch: (a
   );
 }
 
-/** „Dalej →” z dopiskiem pod spodem, co się stanie: pokaż pytanie / następne pytanie / finał. */
 /** Co zrobi „Dalej” w rundach (null = nic). */
-function nextHintText(state: GameState): string | null {
+export function nextHintText(state: GameState): string | null {
   const step = nextStep(state);
   return step === null ? null : NEXT_HINT[step];
 }
@@ -293,7 +292,7 @@ export function NextHint({ text }: { text: string | null }) {
   return <p className="tb-next-hint">Dalej: <b>{text}</b></p>;
 }
 
-function NextButton(p: { state: GameState; highlight: boolean; disabled: boolean; onNext: () => void }) {
+export function NextButton(p: { state: GameState; highlight: boolean; disabled: boolean; onNext: () => void }) {
   const step = nextStep(p.state);
   if (step === null) return null;
   return (

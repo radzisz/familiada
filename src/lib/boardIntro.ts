@@ -11,8 +11,9 @@ export function introFor(before: GameState, state: GameState): IntroKind | null 
   assert(Number.isInteger(state.round) && state.round >= 1, "introFor: bad round");
   // Start gry z ekranu startowego – plansza pierwszej rundy.
   if (!before.started && state.started) return { kind: "round", round: state.round };
+  // Do finału wchodzi się z podsumowania rund (a ze starego zapisu – prosto z rund).
+  if (state.view === "final") return before.view === "summary" || before.view === "game" ? { kind: "final" } : null;
   if (before.view !== "game") return null;
-  if (state.view === "final") return { kind: "final" };
   if (state.view === "game" && state.round > before.round) return { kind: "round", round: state.round };
   return null;
 }

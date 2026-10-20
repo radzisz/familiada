@@ -6,6 +6,7 @@ import type { Board } from "@/lib/types";
 import { FinalView } from "./FinalView";
 import { GameView } from "./GameView";
 import { StartView } from "./StartView";
+import { SummaryView } from "./SummaryView";
 import { ThanksView } from "./ThanksView";
 import { createSound } from "./sound";
 import { RoundIntro } from "./RoundIntro";
@@ -72,6 +73,7 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
       </header>
       {error && !hideHost && <p className="tb-error" role="alert">{error}</p>}
       {state.view === "game" && <GameView state={state} board={board} fx={fx} sound={sound} hideHost={hideHost} pilot={pilot} dispatch={dispatch} onNext={goNext} onTogglePanel={() => setPanelHidden((h) => !h)} />}
+      {state.view === "summary" && <SummaryView state={state} hideHost={hideHost} dispatch={dispatch} onNext={goNext} />}
       {state.view === "final" && <FinalView state={state} board={board} hideHost={hideHost} pilot={pilot} dispatch={dispatch} sound={sound} onTogglePanel={() => setPanelHidden((h) => !h)} />}
       {state.view === "thanks" && <ThanksView state={state} branding={board} hideHost={hideHost} dispatch={dispatch} />}
       {/* Przed startem tablica stoi pod półprzezroczystą nakładką z tytułem i przyciskiem „Start”. */}
