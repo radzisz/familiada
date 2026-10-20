@@ -362,3 +362,5 @@ html:has(.tb), body:has(.tb) { background: #0b0f1c; }
 .tb-summary-team.win { opacity: 1; border-color: var(--led); box-shadow: 0 0 32px color-mix(in srgb, var(--led) 45%, transparent); }
 .tb-summary-team .lbl { color: var(--text); font-weight: 700; font-size: clamp(16px, 2.4vw, 32px); letter-spacing: 2px; }
 .tb-summary-team .val { font-family: var(--led-font); color: var(--led); font-size: clamp(48px, 9vw, 140px); line-height: 1.1; }
+.tb-guide-link { display: inline-flex; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; color: var(--text); text-decoration: none; }
+.tb-guide-link:hover { border-color: var(--led); }

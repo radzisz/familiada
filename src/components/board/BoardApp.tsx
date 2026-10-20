@@ -69,6 +69,7 @@ export function BoardApp({ eventId, pilot }: { eventId: string; pilot: boolean }
         <h1 className={state.started ? undefined : "tb-sr"}>{board.title.toUpperCase()}</h1>
         <nav aria-label="Widoki" hidden={hideHost}>
           {!pilot && <button type="button" onClick={toggleFullscreen}>Pełny ekran</button>}
+          <a className="tb-guide-link" href="/familiada/instrukcja" target="_blank" rel="noreferrer">Instrukcja ↗</a>
         </nav>
       </header>
       {error && !hideHost && <p className="tb-error" role="alert">{error}</p>}

@@ -54,6 +54,7 @@ export function ToolPage({ slug }: { slug: ToolSlug }) {
           ) : (
             <Steps steps={tool.steps ?? []} />
           )}
+          {tool.guide && <p className="st-catalog-link"><Link href={tool.guide}>Instrukcja dla prowadzącego →</Link></p>}
         </div>
       </section>
 

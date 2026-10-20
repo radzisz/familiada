@@ -8,5 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/narzedzia`, priority: 0.9 },
     { url: `${base}/wspolpraca`, priority: 0.6 },
     ...TOOLS.map((t) => ({ url: `${base}/${t.slug}`, priority: 0.8 })),
+    ...TOOLS.filter((t) => t.guide).map((t) => ({ url: `${base}${t.guide}`, priority: 0.5 })),
   ];
 }

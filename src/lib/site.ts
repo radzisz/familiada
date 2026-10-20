@@ -29,6 +29,8 @@ export interface Tool {
   steps?: ToolFeature[];
   /** Kroki pogrupowane w etapy (np. przygotowanie i gra) – zastępują `steps` w „Jak to działa”. */
   stages?: { title: string; steps: ToolFeature[] }[];
+  /** Strona z instrukcją dla prowadzącego (link pod „Jak to działa”). */
+  guide?: string;
   audience: string[];
   faq: { q: string; a: string }[];
 }
@@ -54,6 +56,7 @@ export const TOOLS: Tool[] = [
       { title: "Prawdziwa tablica", text: "Rozgrywka jak w telewizji: rundy, punkty, błędy, pula i finał ze stoperem. Wyświetlasz ją na rzutniku albo telewizorze." },
       { title: "Pilot w telefonie", text: "Prowadzisz grę z telefonu: odkrywasz odpowiedzi, dajesz błędy, przechodzisz do kolejnej rundy." },
     ],
+    guide: "/familiada/instrukcja",
     stages: [
       {
         title: "Etap I – przygotowanie",

@@ -90,7 +90,7 @@
 @media (max-width: 960px) { .st-grid.four { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) {
   .st-section { padding: 52px 0; }
-  .st-grid, .st-grid.four { grid-template-columns: 1fr; }
+  .st-grid, .st-grid.two, .st-grid.four { grid-template-columns: 1fr; }
   .st-split { grid-template-columns: 1fr; gap: 24px; }
 }
 
@@ -222,3 +222,11 @@
 .st-band .st-sub { color: rgba(255, 255, 255, .8); margin-bottom: 0 !important; }
 .st-band-in { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .st-catalog-link { margin-top: 24px !important; font-weight: 700; } .st-catalog-link a { color: var(--st-green); }
+
+/* Instrukcja prowadzącego: wyróżnione najważniejsze rzeczy i kroki gry. */
+.st-callout { border-color: var(--st-accent); }
+.st-callout h2 { font-size: 22px; margin: 0 0 8px; }
+.st-callout ul, .st-guide ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--st-muted); }
+.st-guide { display: flex; flex-direction: column; gap: 32px; max-width: 760px; }
+.st-guide h2 { font-size: 24px; margin: 0 0 12px; }
+.st-guide li::marker { color: var(--st-accent); font-weight: 800; }
